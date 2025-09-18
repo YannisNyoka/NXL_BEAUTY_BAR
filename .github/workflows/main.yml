@@ -9,17 +9,13 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      - name: Install dependencies
-        run: npm install 
-      - name: Build project 
-        run: npm run build
       - name: Deploy to S3
         uses: jakejarvis/s3-sync-action@master
         with:
-          args: --delete
+          args: --delete --exclude "node_modules/*" --exclude ".git/*"
         env:
           AWS_S3_BUCKET: www.nxl-beauty-bar.com
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_REGION: us-east-1  
-          SOURCE_DIR: dist
+          AWS_REGION: us-east-1  # Replace with your actual region
+          SOURCE_DIR: .
