@@ -3,7 +3,7 @@ name: Deploy React Vite App to S3
 on:
   push:
     branches:
-      - main   # change if you deploy from another branch (e.g., master)
+      - main  
 
 jobs:
   deploy:
@@ -16,7 +16,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: 18   # Vite works well with Node 16+ (18 recommended)
+          node-version: 18   
 
       - name: Install dependencies and build
         run: |
@@ -28,7 +28,7 @@ jobs:
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: us-east-1   # change if your bucket is in a different region
+          aws-region: us-east-1   
 
       - name: Deploy to S3
         run: |
