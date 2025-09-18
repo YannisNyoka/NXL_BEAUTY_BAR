@@ -1,1 +1,36 @@
+name: Deploy React Vite App to S3
+
+on:
+  push:
+    branches:
+      - main   # change if you deploy from another branch (e.g., master)
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18   
+
+      - name: Install dependencies and build
+        run: |
+          npm ci
+          npm run build
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AKIAVGHJYFRUOH5SM25V }}
+          aws-secret-access-key: ${{ secrets.Ad/LVdHjEUQlF0SR+V7vt7tXXMAKd6RKKhj1FpxJ }}
+          aws-region: us-east-1   
+
+      - name: Deploy to S3
+        run: |
+          aws s3 sync ./dist s3://nxl-beauty-bar --delete
 
