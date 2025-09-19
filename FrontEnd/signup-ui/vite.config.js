@@ -7,4 +7,10 @@ export default defineConfig({
   server: {
     port: 3000
   }
+  ,
+  build: {
+    // output the build into the parent FrontEnd/dist directory
+    outDir: '../dist',
+    emptyOutDir: true
+  }
 })
