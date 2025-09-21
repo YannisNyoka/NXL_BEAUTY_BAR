@@ -1,5 +1,3 @@
 node_modules/
 BackEnd/
-FrontEnd/signup-ui/node_modules/
-*.log
-.env
+
