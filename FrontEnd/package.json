@@ -6,5 +6,5 @@
     "dev": "npm --prefix signup-ui run dev",
     "build": "npm --prefix signup-ui run build",
     "preview": "npm --prefix signup-ui run preview"
-  }
+  }     
 }
