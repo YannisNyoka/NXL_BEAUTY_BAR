@@ -1,0 +1,12 @@
+{
+  "name": "nxl-beauty-bar-root",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "npm --prefix FrontEnd/signup-ui run dev",
+    "build": "npm --prefix FrontEnd/signup-ui run build",
+    "preview": "npm --prefix FrontEnd/signup-ui run preview",
+    "backend:dev": "npm --prefix BackEnd run dev",
+    "backend:start": "npm --prefix BackEnd start"
+  }
+}
