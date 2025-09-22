@@ -8,19 +8,23 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
+      # 1. Checkout code
       - name: Checkout code
         uses: actions/checkout@v2
 
+      # 2. Install dependencies
       - name: Install dependencies
         run: npm install
 
+      # 3. Build project
       - name: Build project
         run: npm run build
 
+      # 4. Deploy to S3
       - name: Deploy to S3
         uses: jakejarvis/s3-sync-action@master
         with:
-          args: --delete --exact-timestamps --acl public-read
+          args: --delete --exact-timestamps --exclude ".git/*"
           SOURCE_DIR: "dist"
         env:
           AWS_S3_BUCKET: www.nxlbeautybar.com
@@ -28,11 +32,10 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_REGION: eu-north-1
 
-      - name: Fix JS and CSS MIME types
+      # 5. Fix MIME types
+      - name: Fix MIME types for static assets
         run: |
+          # JavaScript
           aws s3 cp dist/ s3://www.nxlbeautybar.com/ --recursive --content-type "text/javascript" --exclude "*" --include "*.js"
+          # CSS
           aws s3 cp dist/ s3://www.nxlbeautybar.com/ --recursive --content-type "text/css" --exclude "*" --include "*.css"
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_REGION: eu-north-1
