@@ -13,12 +13,12 @@ jobs:
 
       - name: Install dependencies
         run: |
-          cd dist
-          npm ci
+      
+          npm install
 
       - name: Build project
         run: |
-          cd signup-ui
+          
           npm run build
 
       - name: Deploy to S3
