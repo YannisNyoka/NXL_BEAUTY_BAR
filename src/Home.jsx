@@ -31,6 +31,12 @@ function getUserLocationAndRedirect() {
 }
 
 function Home() {
+  const API_URL = process.env.REACT_APP_API_URL;
+  useEffect(() => {
+    fetch(`${API_URL}/api/users`)
+      .then(res => res.json())
+      .then(data => console.log(data));
+  }, [API_URL]);
   return (
     <div className="home-container">
       {/* Hero Section */}
