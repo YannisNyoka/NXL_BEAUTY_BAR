@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import noxoloImage from './assets/images/nxl nails.jpg';
 import manicureImage from './assets/images/NxlPic5.jpg';
 import pedicureImage from './assets/images/ToesImage.jpg';
-import eyelashesImage from './assets/images/eyelashesImage.jpg';
+import eyelashesImage from './assets/images/eyeLashesImage.jpg';
 
 
 
