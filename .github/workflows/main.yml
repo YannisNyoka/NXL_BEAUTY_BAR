@@ -8,7 +8,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
+      - name: Install dependencies
+        run: |
+          cd FrontEnd/signup-ui
+          npm install
+      - name: Build project
+        run: |
+          cd FrontEnd/signup-ui
+          npm run build
       - name: Deploy to S3
         uses: jakejarvis/s3-sync-action@master
         with:
