@@ -34,7 +34,8 @@ const PaymentPage = ({ onSave }) => {
     setApiSuccess('');
     try {
       // Save payment details in PAYMENTS collection
-      const paymentRes = await fetch('http://localhost:3001/api/payments', {
+  const API_URL = process.env.REACT_APP_API_URL;
+  const paymentRes = await fetch(`${API_URL}/api/payments`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -54,7 +54,8 @@ const BookingSummary = ({
       // 1. Save user (signup)
       const userPayload = { name, email, contactNumber: localContact };
       console.log('Signup payload:', userPayload);
-      const userRes = await fetch('http://localhost:3001/api/user/signup', {
+  const API_URL = process.env.REACT_APP_API_URL;
+  const userRes = await fetch(`${API_URL}/api/user/signup`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(userPayload)
@@ -84,7 +85,7 @@ const BookingSummary = ({
             time: dateTime
           };
           console.log('Service payload:', servicePayload);
-          const svcRes = await fetch('http://localhost:3001/api/services', {
+          const svcRes = await fetch(`${API_URL}/api/services`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(servicePayload)
@@ -111,7 +112,7 @@ const BookingSummary = ({
           salary: empObj.salary || 0
         };
         console.log('Employee payload:', employeePayload);
-        const employeeRes = await fetch('http://localhost:3001/api/employees', {
+  const employeeRes = await fetch(`${API_URL}/api/employees`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(employeePayload)
@@ -140,7 +141,7 @@ const BookingSummary = ({
           pedicureType: selectedPedicureType
         };
         console.log('Appointment payload:', appointmentPayload);
-        const appointmentRes = await fetch('http://localhost:3001/api/appointments', {
+  const appointmentRes = await fetch(`${API_URL}/api/appointments`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(appointmentPayload)
@@ -165,7 +166,7 @@ const BookingSummary = ({
             status: 'paid'
           };
           console.log('Payment payload:', paymentPayload);
-          const paymentRes = await fetch('http://localhost:3001/api/payments', {
+          const paymentRes = await fetch(`${API_URL}/api/payments`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(paymentPayload)

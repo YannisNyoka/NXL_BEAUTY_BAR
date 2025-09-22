@@ -46,7 +46,8 @@ function SignupForm() {
     if (Object.keys(validationErrors).length === 0) {
       setLoading(true);
       try {
-        const response = await fetch('http://localhost:3001/api/user/signup', {
+  const API_URL = process.env.REACT_APP_API_URL;
+  const response = await fetch(`${API_URL}/api/user/signup`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(form)

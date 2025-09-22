@@ -41,7 +41,8 @@ function LoginForm() {
       try {
         // Create Basic Auth header
         const credentials = btoa(`${form.email}:${form.password}`);
-        const response = await fetch('http://localhost:3001/api/user/signin', {
+  const API_URL = process.env.REACT_APP_API_URL;
+  const response = await fetch(`${API_URL}/api/user/signin`, {
           method: 'POST',
           headers: { 
             'Content-Type': 'application/json',
