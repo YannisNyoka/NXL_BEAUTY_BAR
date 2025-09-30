@@ -32,24 +32,38 @@ function getUserLocationAndRedirect() {
 }
 
 function Home() {
+  const [connectionStatus, setConnectionStatus] = useState('Testing...');
+  
   useEffect(() => {
     // Test backend connection and fetch data
     const testConnectionAndFetchData = async () => {
-      // Test connection first
-      const pingResult = await api.ping();
-      if (pingResult.success) {
-        console.log('✅ Backend connection successful:', pingResult.data);
-        
-        // Fetch users data
-        const usersResult = await api.getUsers();
-        if (usersResult.success) {
-          console.log('✅ Users data:', usersResult.data);
+      const API_URL = import.meta.env.VITE_API_URL;
+      console.log('🔍 Testing API URL:', API_URL);
+      setConnectionStatus(`Testing connection to: ${API_URL}`);
+      
+      try {
+        // Test connection first
+        console.log('🔍 Testing /api/ping endpoint...');
+        const pingResult = await api.ping();
+        if (pingResult.success) {
+          console.log('✅ Backend connection successful:', pingResult.data);
+          setConnectionStatus('✅ Backend connected successfully!');
+          
+          // Fetch users data
+          const usersResult = await api.getUsers();
+          if (usersResult.success) {
+            console.log('✅ Users data:', usersResult.data);
+          } else {
+            console.error('❌ Failed to fetch users:', usersResult.error);
+            setConnectionStatus('⚠️ Connected but failed to fetch users');
+          }
         } else {
-          console.error('❌ Failed to fetch users:', usersResult.error);
+          console.error('❌ Backend connection failed:', pingResult.error);
+          setConnectionStatus(`❌ Connection failed: ${pingResult.error}`);
         }
-      } else {
-        console.error('❌ Backend connection failed:', pingResult.error);
-        console.log('Make sure your backend server is running on http://localhost:3001');
+      } catch (error) {
+        console.error('❌ Network error:', error);
+        setConnectionStatus(`❌ Network error: ${error.message}`);
       }
     };
     
@@ -60,6 +74,22 @@ function Home() {
       {/* Hero Section */}
       <div className="hero-section">
         <h1 className="hero-title">WELCOME TO NXL BEAUTY BAR BOOKING SITE</h1>
+        
+        {/* Connection Status Indicator */}
+        <div style={{
+          padding: '10px', 
+          margin: '10px 0', 
+          backgroundColor: connectionStatus.includes('✅') ? '#d4edda' : 
+                          connectionStatus.includes('⚠️') ? '#fff3cd' : '#f8d7da',
+          color: connectionStatus.includes('✅') ? '#155724' : 
+                 connectionStatus.includes('⚠️') ? '#856404' : '#721c24',
+          borderRadius: '5px',
+          fontSize: '14px',
+          textAlign: 'center'
+        }}>
+          Backend Status: {connectionStatus}
+        </div>
+        
         <p className="hero-subtitle">READY TO GIVE YOUR NAILS THE CARE THEY DESERVE?</p>
         
         <div className="nail-artist-section">
