@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { useEffect, useState } from 'react';
+import { api } from './api.js';
 import noxoloImage from './assets/images/nxl nails.jpg';
 import manicureImage from './assets/images/NxlPic5.jpg';
 import pedicureImage from './assets/images/ToesImage.jpg';
@@ -31,12 +32,29 @@ function getUserLocationAndRedirect() {
 }
 
 function Home() {
-  const API_URL = import.meta.env.VITE_API_URL;
   useEffect(() => {
-    fetch(`${API_URL}/api/users`)
-      .then(res => res.json())
-      .then(data => console.log(data));
-  }, [API_URL]);
+    // Test backend connection and fetch data
+    const testConnectionAndFetchData = async () => {
+      // Test connection first
+      const pingResult = await api.ping();
+      if (pingResult.success) {
+        console.log('✅ Backend connection successful:', pingResult.data);
+        
+        // Fetch users data
+        const usersResult = await api.getUsers();
+        if (usersResult.success) {
+          console.log('✅ Users data:', usersResult.data);
+        } else {
+          console.error('❌ Failed to fetch users:', usersResult.error);
+        }
+      } else {
+        console.error('❌ Backend connection failed:', pingResult.error);
+        console.log('Make sure your backend server is running on http://localhost:3001');
+      }
+    };
+    
+    testConnectionAndFetchData();
+  }, []);
   return (
     <div className="home-container">
       {/* Hero Section */}

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import ConfirmationPopup from './ConfirmationPopup';
 import { useAuth } from './AuthContext';
 import { useLocation } from 'react-router-dom';
+import { api } from './api.js';
 
 
 const PaymentPage = ({ onSave }) => {
@@ -34,23 +35,21 @@ const PaymentPage = ({ onSave }) => {
     setApiSuccess('');
     try {
       // Save payment details in PAYMENTS collection
-  const API_URL = import.meta.env.VITE_API_URL;
-  const paymentRes = await fetch(`${API_URL}/api/payments`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...authHeader
-        },
-        body: JSON.stringify({
-          appointmentId,
-          amount: 100, // or use totalPrice if available
-          paymentMethod: method,
-          status: 'paid'
-        })
-      });
-      setApiSuccess('Payment successful!');
-      setShowConfirmation(true);
-      if (onSave) onSave({ method, cardNumber, expiry, cvc, country });
+      const paymentData = {
+        appointmentId,
+        amount: 100, // or use totalPrice if available
+        paymentMethod: method,
+        status: 'paid'
+      };
+      
+      const result = await api.createPayment(paymentData);
+      if (result.success) {
+        setApiSuccess('Payment successful!');
+        setShowConfirmation(true);
+        if (onSave) onSave({ method, cardNumber, expiry, cvc, country });
+      } else {
+        setApiError(result.error || 'Payment failed. Please try again.');
+      }
     } catch (err) {
       setApiError('Payment failed. Please try again.');
     } finally {

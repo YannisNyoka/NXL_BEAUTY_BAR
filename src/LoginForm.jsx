@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from './AuthContext';
+import { api } from './api.js';
 
 function LoginForm() {
   const [form, setForm] = useState({
@@ -39,24 +40,13 @@ function LoginForm() {
     if (Object.keys(validationErrors).length === 0) {
       setLoading(true);
       try {
-        // Create Basic Auth header
-        const credentials = btoa(`${form.email}:${form.password}`);
-  const API_URL = import.meta.env.VITE_API_URL;
-  const response = await fetch(`${API_URL}/api/user/signin`, {
-          method: 'POST',
-          headers: { 
-            'Content-Type': 'application/json',
-            'Authorization': `Basic ${credentials}`
-          },
-          body: JSON.stringify(form)
-        });
-        const data = await response.json();
-        if (response.ok) {
+        const result = await api.signin(form);
+        if (result.success) {
           setApiSuccess('Welcome back! You have successfully signed in.');
           
           // Extract user info from the response
           const userData = {
-            email: data.email,
+            email: form.email,
             firstName: data.firstName,
             lastName: data.lastName,
             id: data.userId
@@ -75,7 +65,7 @@ function LoginForm() {
             password: ''
           });
         } else {
-          setApiError(data.message || 'Invalid email or password. Please try again.');
+          setApiError(result.error || 'Invalid email or password. Please try again.');
         }
       } catch (err) {
         setApiError('Network error. Please check your connection and try again.');

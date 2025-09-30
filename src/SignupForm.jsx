@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { api } from './api.js';
 
 function SignupForm() {
   const [form, setForm] = useState({
@@ -46,14 +47,8 @@ function SignupForm() {
     if (Object.keys(validationErrors).length === 0) {
       setLoading(true);
       try {
-  const API_URL = import.meta.env.VITE_API_URL;
-  const response = await fetch(`${API_URL}/api/user/signup`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(form)
-        });
-        const data = await response.json();
-        if (response.ok) {
+        const result = await api.signup(form);
+        if (result.success) {
           setApiSuccess('Welcome to NXL Beauty Bar! Your account has been created successfully.');
           setSubmitted(true);
           setForm({
@@ -69,7 +64,7 @@ function SignupForm() {
             navigate('/');
           }, 2000);
         } else {
-          setApiError(data.message || 'Signup failed. Please try again.');
+          setApiError(result.error || 'Signup failed. Please try again.');
           setSubmitted(false);
         }
       } catch (err) {

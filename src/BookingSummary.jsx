@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import './BookingSummary.css';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from './AuthContext';
+import { api } from './api.js';
 
 const BookingSummary = ({
   open,
@@ -54,18 +55,12 @@ const BookingSummary = ({
       // 1. Save user (signup)
       const userPayload = { name, email, contactNumber: localContact };
       console.log('Signup payload:', userPayload);
-  const API_URL = import.meta.env.VITE_API_URL;
-  const userRes = await fetch(`${API_URL}/api/user/signup`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(userPayload)
-      });
-      console.log('Signup response status:', userRes.status);
-      let userJson = {};
-      try {
-        userJson = await userRes.json();
-      } catch (e) {
-        console.log('Signup response parse error:', e);
+      
+      const userResult = await api.signup(userPayload);
+      console.log('Signup result:', userResult);
+      
+      if (!userResult.success) {
+        console.log('Signup failed:', userResult.error);
       }
         console.log('Signup response body:', userJson);
         const userId = userJson.userId;
