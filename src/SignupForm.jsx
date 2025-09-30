@@ -46,7 +46,7 @@ function SignupForm() {
     if (Object.keys(validationErrors).length === 0) {
       setLoading(true);
       try {
-  const API_URL = process.env.REACT_APP_API_URL;
+  const API_URL = import.meta.env.VITE_API_URL;
   const response = await fetch(`${API_URL}/api/user/signup`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
