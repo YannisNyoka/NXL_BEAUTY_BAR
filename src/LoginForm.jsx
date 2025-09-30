@@ -47,9 +47,9 @@ function LoginForm() {
           // Extract user info from the response
           const userData = {
             email: form.email,
-            firstName: data.firstName,
-            lastName: data.lastName,
-            id: data.userId
+            firstName: result.data.firstName || 'User',
+            lastName: result.data.lastName || '',
+            id: result.data.userId
           };
           
           // Login the user
