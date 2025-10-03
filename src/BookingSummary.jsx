@@ -52,8 +52,17 @@ const BookingSummary = ({
     setApiError('');
     setApiSuccess('');
     try {
-      // 1. Save user (signup)
-      const userPayload = { name, email, contactNumber: localContact };
+      // 1. Save user (signup) - split name into firstName and lastName
+      const nameParts = name.trim().split(' ');
+      const firstName = nameParts[0] || 'User';
+      const lastName = nameParts.slice(1).join(' ') || 'Customer';
+      
+      const userPayload = { 
+        firstName, 
+        lastName, 
+        email, 
+        password: 'TempPass123!' // Temporary password for booking users
+      };
       console.log('Signup payload:', userPayload);
       
       const userResult = await api.signup(userPayload);
@@ -61,147 +70,85 @@ const BookingSummary = ({
       
       if (!userResult.success) {
         console.log('Signup failed:', userResult.error);
+        // Continue with booking even if user already exists
       }
-        console.log('Signup response body:', userJson);
-        const userId = userJson.userId;
+      
+      const userId = userResult.data?.userId || 'temp-user-id';
 
-        // 2. Save each selected service and collect IDs
-        const serviceIds = [];
-        for (const svcName of selectedServices) {
-          const svcObj = servicesList.find(s => s.name === svcName);
-          if (!svcObj) continue;
-          const servicePayload = {
-            name: svcObj.name,
-            price: svcObj.price,
-            duration: svcObj.duration,
-            stylist: selectedEmployee,
-            userName: name,
-            date: dateTime,
-            time: dateTime
-          };
-          console.log('Service payload:', servicePayload);
-          const svcRes = await fetch(`${API_URL}/api/services`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(servicePayload)
-          });
-          console.log('Service response status:', svcRes.status);
-          let svcJson = {};
-          try {
-            svcJson = await svcRes.json();
-          } catch (e) {
-            console.log('Service response parse error:', e);
-          }
-          console.log('Service response body:', svcJson);
-          const serviceId = svcJson.serviceId;
-          serviceIds.push(serviceId);
-        }
-
-        // 3. Save selected employee/stylist
-        const empObj = employeesList.find(e => e.name === selectedEmployee) || employeesList[0];
-        const employeePayload = {
-          name: empObj.name,
-          email: empObj.email,
-          phone: empObj.phone || '',
-          position: empObj.position || 'Stylist',
-          salary: empObj.salary || 0
-        };
-        console.log('Employee payload:', employeePayload);
-  const employeeRes = await fetch(`${API_URL}/api/employees`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(employeePayload)
-        });
-        console.log('Employee response status:', employeeRes.status);
-        let employeeJson = {};
-        try {
-          employeeJson = await employeeRes.json();
-        } catch (e) {
-          console.log('Employee response parse error:', e);
-        }
-        console.log('Employee response body:', employeeJson);
-        const employeeId = employeeJson.employeeId;
-
-        // 4. Save appointment with all required fields
-        const appointmentPayload = {
-          userId: userId || '',
-          serviceIds: Array.isArray(serviceIds) ? serviceIds : [],
-          date: dateTime || '',
-          userName: name,
-          contactNumber: localContact,
-          stylist: selectedEmployee,
-          totalPrice,
-          totalDuration,
-          manicureType: selectedManicureType,
-          pedicureType: selectedPedicureType
-        };
-        console.log('Appointment payload:', appointmentPayload);
-  const appointmentRes = await fetch(`${API_URL}/api/appointments`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(appointmentPayload)
-        });
-        console.log('Appointment response status:', appointmentRes.status);
-        let appointmentJson = {};
-        try {
-          appointmentJson = await appointmentRes.json();
-        } catch (e) {
-          console.log('Appointment response parse error:', e);
-        }
-        console.log('Appointment response body:', appointmentJson);
-        const appointmentId = appointmentJson.appointmentId;
-        if (!appointmentId) {
-          console.error('Appointment creation failed, not posting payment.');
-        } else {
-          // 5. Save payment linked to appointment
-          const paymentPayload = {
-            appointmentId,
-            amount: totalPrice,
-            paymentMethod: 'card',
-            status: 'paid'
-          };
-          console.log('Payment payload:', paymentPayload);
-          const paymentRes = await fetch(`${API_URL}/api/payments`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(paymentPayload)
-          });
-          console.log('Payment response status:', paymentRes.status);
-          let paymentJson = {};
-          try {
-            paymentJson = await paymentRes.json();
-          } catch (e) {
-            console.log('Payment response parse error:', e);
-          }
-          console.log('Payment response body:', paymentJson);
-        }
-
-        setApiSuccess('Booking details saved! Proceed to payment.');
-        navigate('/payment', { state: { name, dateTime, appointmentId } });
-        if (onClose) onClose();
-
-        // Notify Dashboard to update bookedSlots
-        if (onBookingConfirmed) {
-          // Parse date and time from dateTime string
-          // Example: "September 2, 2025, 09:00 am"
-          let date = '';
-          let time = '';
-          if (dateTime) {
-            const parts = dateTime.split(',');
-            date = parts[0].trim();
-            time = parts[1] ? parts[1].trim() : '';
-          }
-          onBookingConfirmed({
-            date,
-            time,
-            userName: name
-          });
-        }
-      } catch (err) {
-        setApiError('Failed to save booking. Please try again.');
-      } finally {
-        setLoading(false);
+      // 2. Create appointment directly with service names
+      const appointmentPayload = {
+        userId: userId,
+        serviceNames: selectedServices, // Pass service names instead of IDs
+        date: dateTime || '',
+        userName: name,
+        contactNumber: localContact,
+        stylist: selectedEmployee,
+        totalPrice: totalPrice,
+        totalDuration: totalDuration,
+        manicureType: selectedManicureType,
+        pedicureType: selectedPedicureType
+      };
+      console.log('Appointment payload:', appointmentPayload);
+      
+      const appointmentResult = await api.createAppointment(appointmentPayload);
+      console.log('Appointment result:', appointmentResult);
+      
+      if (!appointmentResult.success) {
+        throw new Error(appointmentResult.error || 'Failed to create appointment');
       }
+      
+      const appointmentId = appointmentResult.data?.appointmentId;
+      
+      if (!appointmentId) {
+        throw new Error('Failed to get appointment ID');
+      }
+
+      // 3. Create payment for the appointment
+      const paymentPayload = {
+        appointmentId,
+        amount: totalPrice,
+        paymentMethod: 'card',
+        status: 'paid'
+      };
+      console.log('Payment payload:', paymentPayload);
+      
+      const paymentResult = await api.createPayment(paymentPayload);
+      console.log('Payment result:', paymentResult);
+      
+      if (!paymentResult.success) {
+        console.warn('Payment creation failed:', paymentResult.error);
+      }
+
+      // Success!
+      setApiSuccess('Booking details saved! Proceed to payment.');
+      navigate('/payment', {
+        state: {
+          name: name,
+          dateTime: dateTime,
+          appointmentId: appointmentId
+        }
+      });
+
+      if (onClose) onClose();
+      if (onBookingConfirmed) {
+        let appointmentDate = '', appointmentTime = '';
+        if (dateTime) {
+          const parts = dateTime.split(', ');
+          appointmentDate = parts[0]?.trim() || '';
+          appointmentTime = parts[1]?.trim() || '';
+        }
+        onBookingConfirmed({
+          date: appointmentDate,
+          time: appointmentTime,
+          userName: name
+        });
+      }
+    } catch (err) {
+      console.error('Booking failed:', err);
+      setApiError('Failed to save booking. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
