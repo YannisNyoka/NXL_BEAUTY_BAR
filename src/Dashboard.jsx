@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import BookingSummary from './BookingSummary';
 import { useAuth } from './AuthContext';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { api } from './api.js';
 
 function Dashboard() {
   // Pedicure types
@@ -34,7 +35,8 @@ function Dashboard() {
     'Vinylux manicure'
   ];
   const [selectedManicureType, setSelectedManicureType] = useState('');
-  const { user, logout } = useAuth();
+  const { user, logout, appointmentRefreshTrigger } = useAuth();
+  const navigate = useNavigate();
   const [selectedServices, setSelectedServices] = useState([]);
   // Default to today's date if none selected
   const today = new Date();
@@ -79,15 +81,58 @@ function Dashboard() {
     { name: 'Thandi', email: 'thandi@nxlbeautybar.com', position: 'Stylist' }
   ];
 
-  // Change bookedSlots to state and include userName
-  const [bookedSlots, setBookedSlots] = useState([
-    { date: 'August 16, 2025', time: '09:00 am', userName: 'Jane Doe' },
-    { date: 'August 16, 2025', time: '10:00 am', userName: 'Jane Doe' },
-    { date: 'August 17, 2025', time: '12:00 pm', userName: 'John Smith' }
-  ]);
+  // Change bookedSlots to state and include userName - now fetched from API
+  const [bookedSlots, setBookedSlots] = useState([]);
+  const [loadingAppointments, setLoadingAppointments] = useState(true);
+
+  // Fetch appointments from API
+  useEffect(() => {
+    fetchAppointments();
+  }, []);
+
+  // Listen for appointment refresh triggers from other components
+  useEffect(() => {
+    if (appointmentRefreshTrigger > 0) {
+      fetchAppointments();
+    }
+  }, [appointmentRefreshTrigger]);
+
+  const fetchAppointments = async () => {
+    try {
+      setLoadingAppointments(true);
+      const result = await api.getAppointments();
+      if (result.success) {
+        // Convert API appointments to dashboard format
+        const formattedSlots = result.data.map(appointment => ({
+          date: appointment.date,
+          time: appointment.time || 'Time TBD',
+          userName: appointment.userName,
+          serviceType: appointment.serviceIds ? 'Multiple Services' : 'Service',
+          appointmentId: appointment._id
+        }));
+        setBookedSlots(formattedSlots);
+      } else {
+        console.error('Failed to fetch appointments:', result.error);
+        // Keep some default data for demo purposes
+        setBookedSlots([
+          { date: 'August 16, 2025', time: '09:00 am', userName: 'Jane Doe' },
+          { date: 'August 16, 2025', time: '10:00 am', userName: 'Jane Doe' },
+          { date: 'August 17, 2025', time: '12:00 pm', userName: 'John Smith' }
+        ]);
+      }
+    } catch (error) {
+      console.error('Error fetching appointments:', error);
+    } finally {
+      setLoadingAppointments(false);
+    }
+  };
 
   const handleLogout = () => {
     logout();
+  };
+
+  const handleProfileClick = () => {
+    navigate('/profile');
   };
 
   const togglePanel = (panelName) => {
@@ -175,18 +220,21 @@ function Dashboard() {
     return bookedSlots.some(slot => slot.date === `${monthName} ${date}` && slot.time === time);
   };
 
-  // Update booking confirmation callback to include serviceType
-  const handleBookingConfirmed = (bookingInfo) => {
-    // bookingInfo: { date, time, userName, serviceType }
+  // Update booking confirmation callback to refresh appointments from API
+  const handleBookingConfirmed = async (bookingInfo) => {
+    // Immediately add to local state for instant feedback
     setBookedSlots(prev => [
       ...prev,
       {
         date: bookingInfo.date,
         time: bookingInfo.time,
         userName: bookingInfo.userName,
-        serviceType: bookingInfo.serviceType // <-- now included
+        serviceType: bookingInfo.serviceType || 'Service'
       }
     ]);
+
+    // Refresh from API to get the most up-to-date data
+    await fetchAppointments();
   };
 
   // Helper to get booked user name
@@ -267,10 +315,26 @@ function Dashboard() {
           <h1>NXL Beauty Bar</h1>
         </div>
         <div className="header-right">
-          <div className="user-info">
+          <button 
+            className="user-info" 
+            onClick={handleProfileClick}
+            style={{
+              background: '',
+              border: 'none',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              padding: '8px 12px',
+              borderRadius: '8px',
+              transition: 'background-color 0.2s',
+            }}
+            onMouseEnter={(e) => e.target.style.backgroundColor = '#f0f0f0'}
+            onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
+          >
             <span className="user-icon">👤</span>
             <span className="user-name">{user?.firstName} {user?.lastName}</span>
-          </div>
+          </button>
         </div>
       </div>
 
@@ -372,7 +436,26 @@ function Dashboard() {
                   <span>Sa</span>
                   <span>Su</span>
                 </div>
-                <div className="calendar-grid">
+                <div className="calendar-grid" style={{ position: 'relative' }}>
+                  {loadingAppointments && (
+                    <div style={{
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      bottom: 0,
+                      background: 'rgba(255, 255, 255, 0.8)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      zIndex: 10,
+                      borderRadius: '8px'
+                    }}>
+                      <div style={{ color: '#666', fontSize: '14px' }}>
+                        Loading appointments...
+                      </div>
+                    </div>
+                  )}
                   {getDaysInMonth(currentMonth).map((day, index) => (
                     <div 
                       key={index}

@@ -32,7 +32,7 @@ const BookingSummary = ({
   if (!open) return null;
 
   // Get credentials from user context or prompt
-  const { user } = useAuth();
+  const { user, triggerAppointmentRefresh } = useAuth();
   const email = user?.email;
   const password = user?.rawPassword; // You must store raw password on login/signup for this to work
   const authHeader = email && password ? { 'Authorization': 'Basic ' + btoa(email + ':' + password) } : {};
@@ -143,6 +143,10 @@ const BookingSummary = ({
           userName: name
         });
       }
+
+      // Trigger appointment refresh across all components
+      triggerAppointmentRefresh();
+      
     } catch (err) {
       console.error('Booking failed:', err);
       setApiError('Failed to save booking. Please try again.');

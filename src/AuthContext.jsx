@@ -13,6 +13,7 @@ export const useAuth = () => {
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [appointmentRefreshTrigger, setAppointmentRefreshTrigger] = useState(0);
 
   const login = (userData) => {
     setUser(userData);
@@ -24,11 +25,18 @@ export const AuthProvider = ({ children }) => {
     setIsAuthenticated(false);
   };
 
+  // Function to trigger appointment refresh across all components
+  const triggerAppointmentRefresh = () => {
+    setAppointmentRefreshTrigger(prev => prev + 1);
+  };
+
   const value = {
     user,
     isAuthenticated,
     login,
-    logout
+    logout,
+    appointmentRefreshTrigger,
+    triggerAppointmentRefresh
   };
 
   return (

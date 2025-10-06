@@ -4,6 +4,7 @@ import Home from './Home.jsx';
 import SignupForm from './SignupForm.jsx';
 import LoginForm from './LoginForm.jsx';
 import Dashboard from './Dashboard.jsx';
+import UserProfile from './UserProfile.jsx';
 import ProtectedRoute from './ProtectedRoute.jsx';
 import PaymentPage from './PaymentPage.jsx';
 
@@ -20,6 +21,14 @@ function App() {
           element={
             <ProtectedRoute>
               <Dashboard />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/profile" 
+          element={
+            <ProtectedRoute>
+              <UserProfile />
             </ProtectedRoute>
           } 
         />

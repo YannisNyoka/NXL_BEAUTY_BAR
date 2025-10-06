@@ -44,13 +44,27 @@ function LoginForm() {
         if (result.success) {
           setApiSuccess('Welcome back! You have successfully signed in.');
           
-          // Extract user info from the response
-          const userData = {
+          // Get user details from the users endpoint
+          const usersResult = await api.getUsers();
+          let userData = {
             email: form.email,
-            firstName: result.data.firstName || 'User',
-            lastName: result.data.lastName || '',
+            firstName: 'User',
+            lastName: '',
             id: result.data.userId
           };
+          
+          // Find the current user in the users list
+          if (usersResult.success) {
+            const currentUser = usersResult.data.find(user => user.email === form.email);
+            if (currentUser) {
+              userData = {
+                email: form.email,
+                firstName: currentUser.firstName || 'User',
+                lastName: currentUser.lastName || '',
+                id: currentUser._id || result.data.userId
+              };
+            }
+          }
           
           // Login the user
           login(userData);

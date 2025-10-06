@@ -65,6 +65,16 @@ export const api = {
 
   getAppointments: () => apiCall('/api/appointments'),
 
+  // Appointment management (Note: These endpoints may need to be added to your backend)
+  cancelAppointment: (appointmentId) => apiCall(`/api/appointments/${appointmentId}`, {
+    method: 'DELETE',
+  }),
+
+  updateAppointment: (appointmentId, updateData) => apiCall(`/api/appointments/${appointmentId}`, {
+    method: 'PUT',
+    body: JSON.stringify(updateData),
+  }),
+
   // Service operations
   createService: (serviceData) => apiCall('/api/services', {
     method: 'POST',
