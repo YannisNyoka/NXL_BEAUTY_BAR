@@ -46,25 +46,30 @@ const PaymentPage = ({ onSave }) => {
       if (result.success) {
         // Send confirmation email after successful payment
         try {
-          const emailData = {
-            customerEmail: email || user?.email,
-            customerName: name,
-            appointmentDetails: {
-              date: location.state?.appointmentDate || '',
-              time: location.state?.appointmentTime || '',
-              services: location.state?.selectedServices || [],
-              employee: location.state?.selectedEmployee || 'Noxolo',
-              totalPrice: location.state?.totalPrice || 100,
-              totalDuration: location.state?.totalDuration || 90,
-              contactNumber: location.state?.contactNumber || '',
-              appointmentId: appointmentId
-            }
-          };
-          
-          const emailResult = await api.sendConfirmationEmail(emailData);
-          if (!emailResult.success) {
+          const response = await fetch('http://localhost:3001/api/send-confirmation-email', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              customerEmail: email || user?.email,
+              customerName: name,
+              appointmentDetails: {
+                date: location.state?.appointmentDate || '',
+                time: location.state?.appointmentTime || '',
+                services: location.state?.selectedServices || [],
+                employee: location.state?.selectedEmployee || 'Noxolo',
+                totalPrice: location.state?.totalPrice || 100,
+                totalDuration: location.state?.totalDuration || 90,
+                contactNumber: location.state?.contactNumber || '',
+                appointmentId: appointmentId
+              }
+            })
+          });
+
+          const emailResult = await response.json();
+          if (emailResult.success) {
+            console.log('Confirmation email sent successfully');
+          } else {
             console.warn('Email sending failed:', emailResult.error);
-            // Don't fail the payment for email issues
           }
         } catch (emailError) {
           console.warn('Email sending error:', emailError);
