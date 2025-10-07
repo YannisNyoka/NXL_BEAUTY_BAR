@@ -215,9 +215,11 @@ function UserProfile() {
                     <p style={{ margin: '0.25rem 0', color: '#333' }}>
                       <strong>Date:</strong> {formatDate(appointment.date)}
                     </p>
-                    <p style={{ margin: '0.25rem 0', color: '#333' }}>
-                      <strong>Time:</strong> {appointment.time || 'Time TBD'}
-                    </p>
+                    {appointment.time && (
+                      <p style={{ margin: '0.25rem 0', color: '#333' }}>
+                        <strong>Time:</strong> {appointment.time}
+                      </p>
+                    )}
                     <p style={{ margin: '0.25rem 0', color: '#333' }}>
                       <strong>Stylist:</strong> {appointment.stylist}
                     </p>
@@ -311,6 +313,11 @@ function UserProfile() {
                   <p style={{ margin: '0.25rem 0', color: '#333' }}>
                     <strong>Date:</strong> {formatDate(appointment.date)}
                   </p>
+                  {appointment.time && (
+                    <p style={{ margin: '0.25rem 0', color: '#333' }}>
+                      <strong>Time:</strong> {appointment.time}
+                    </p>
+                  )}
                   <p style={{ margin: '0.25rem 0', color: '#333' }}>
                     <strong>Stylist:</strong> {appointment.stylist}
                   </p>

@@ -75,11 +75,25 @@ const BookingSummary = ({
       
       const userId = userResult.data?.userId || 'temp-user-id';
 
-      // 2. Create appointment directly with service names
+      // Parse dateTime to extract date and time separately
+      let appointmentDate = dateTime || '';
+      let appointmentTime = '';
+      
+      if (dateTime) {
+        // dateTime format: "October 2025 7, 09:00 am"
+        const parts = dateTime.split(', ');
+        if (parts.length === 2) {
+          appointmentDate = parts[0]; // "October 2025 7"
+          appointmentTime = parts[1]; // "09:00 am"
+        }
+      }
+
+      // 2. Create appointment with separate date and time fields
       const appointmentPayload = {
         userId: userId,
         serviceNames: selectedServices, // Pass service names instead of IDs
-        date: dateTime || '',
+        date: appointmentDate,
+        time: appointmentTime, // Add separate time field
         userName: name,
         contactNumber: localContact,
         stylist: selectedEmployee,

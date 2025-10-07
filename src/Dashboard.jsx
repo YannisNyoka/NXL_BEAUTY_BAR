@@ -65,14 +65,10 @@ function Dashboard() {
 
   const timeSlots = {
     morning: [
-      '09:00 am', '09:15 am', '09:30 am', '09:45 am',
-      '10:00 am', '10:15 am', '10:30 am', '10:45 am',
-      '11:00 am', '11:15 am', '11:30 am', '11:45 am'
+      '09:00 am', '10:30 am'
     ],
     afternoon: [
-      '12:00 pm', '12:15 pm', '12:30 pm', '01:45 pm',
-      '02:00 pm', '02:15 pm', '02:30 pm', '02:45 pm',
-      '03:00 pm', '03:15 pm', '03:30 pm', '03:45 pm'
+      '12:00 pm', '01:30 pm', '03:00 pm', '04:30 pm'
     ]
   };
 
@@ -105,19 +101,19 @@ function Dashboard() {
         // Convert API appointments to dashboard format
         const formattedSlots = result.data.map(appointment => ({
           date: appointment.date,
-          time: appointment.time || 'Time TBD',
+          time: appointment.time, // Remove the fallback to 'Time TBD'
           userName: appointment.userName,
           serviceType: appointment.serviceIds ? 'Multiple Services' : 'Service',
           appointmentId: appointment._id
-        }));
+        })).filter(slot => slot.time); // Filter out appointments without time
         setBookedSlots(formattedSlots);
       } else {
         console.error('Failed to fetch appointments:', result.error);
-        // Keep some default data for demo purposes
+        // Keep some default data for demo purposes with new time slots
         setBookedSlots([
-          { date: 'August 16, 2025', time: '09:00 am', userName: 'Jane Doe' },
-          { date: 'August 16, 2025', time: '10:00 am', userName: 'Jane Doe' },
-          { date: 'August 17, 2025', time: '12:00 pm', userName: 'John Smith' }
+          { date: 'October 2025 7', time: '09:00 am', userName: 'Jane Doe', serviceType: 'Manicure' },
+          { date: 'October 2025 8', time: '12:00 pm', userName: 'John Smith', serviceType: 'Pedicure' },
+          { date: 'October 2025 9', time: '03:00 pm', userName: 'Mary Johnson', serviceType: 'Lashes' }
         ]);
       }
     } catch (error) {
