@@ -139,7 +139,14 @@ const BookingSummary = ({
         state: {
           name: name,
           dateTime: dateTime,
-          appointmentId: appointmentId
+          appointmentId: appointmentId,
+          appointmentDate: appointmentDate,
+          appointmentTime: appointmentTime,
+          selectedServices: selectedServices,
+          selectedEmployee: selectedEmployee,
+          totalPrice: totalPrice,
+          totalDuration: totalDuration,
+          contactNumber: localContact
         }
       });
 

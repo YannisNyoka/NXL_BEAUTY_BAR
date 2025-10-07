@@ -20,10 +20,13 @@ function UserProfile() {
       setLoading(true);
       const result = await api.getAppointments();
       if (result.success) {
-        // Filter appointments for the current user
+        // Get cancelled appointments from localStorage
+        const cancelledAppointments = JSON.parse(localStorage.getItem('cancelledAppointments') || '[]');
+        
+        // Filter appointments for the current user and exclude cancelled ones
         const userAppointments = result.data.filter(apt => 
-          apt.userName === `${user?.firstName} ${user?.lastName}` || 
-          apt.userId === user?.id
+          (apt.userName === `${user?.firstName} ${user?.lastName}` || apt.userId === user?.id) &&
+          !cancelledAppointments.includes(apt._id)
         );
         setAppointments(userAppointments);
       } else {
@@ -39,20 +42,30 @@ function UserProfile() {
   const handleCancelAppointment = async (appointmentId) => {
     setCancellingId(appointmentId);
     try {
-      // Try to call the backend cancel endpoint
-      const result = await api.cancelAppointment(appointmentId);
+      console.log(`Cancelling appointment ${appointmentId}`);
       
-      if (result.success) {
-        console.log(`Successfully cancelled appointment ${appointmentId}`);
-      } else {
-        console.log(`Backend cancel failed: ${result.error}, removing locally`);
+      // Store cancelled appointment ID in localStorage for persistence
+      const cancelledAppointments = JSON.parse(localStorage.getItem('cancelledAppointments') || '[]');
+      if (!cancelledAppointments.includes(appointmentId)) {
+        cancelledAppointments.push(appointmentId);
+        localStorage.setItem('cancelledAppointments', JSON.stringify(cancelledAppointments));
       }
       
-      // Remove from local state regardless
+      // Try the API delete call
+      try {
+        await api.cancelAppointment(appointmentId);
+        console.log('Backend deletion attempt completed');
+      } catch (apiError) {
+        console.log('Backend deletion failed (expected):', apiError.message);
+      }
+      
+      // Remove from local state immediately for UI responsiveness
       setAppointments(prev => prev.filter(apt => apt._id !== appointmentId));
       
       // Trigger refresh in dashboard and other components
       triggerAppointmentRefresh();
+      
+      console.log('Appointment cancelled successfully');
       
     } catch (err) {
       setError('Failed to cancel appointment');

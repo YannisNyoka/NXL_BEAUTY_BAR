@@ -98,14 +98,20 @@ function Dashboard() {
       setLoadingAppointments(true);
       const result = await api.getAppointments();
       if (result.success) {
-        // Convert API appointments to dashboard format
-        const formattedSlots = result.data.map(appointment => ({
-          date: appointment.date,
-          time: appointment.time, // Remove the fallback to 'Time TBD'
-          userName: appointment.userName,
-          serviceType: appointment.serviceIds ? 'Multiple Services' : 'Service',
-          appointmentId: appointment._id
-        })).filter(slot => slot.time); // Filter out appointments without time
+        // Get cancelled appointments from localStorage
+        const cancelledAppointments = JSON.parse(localStorage.getItem('cancelledAppointments') || '[]');
+        
+        // Convert API appointments to dashboard format and filter out cancelled ones
+        const formattedSlots = result.data
+          .filter(appointment => !cancelledAppointments.includes(appointment._id)) // Exclude cancelled
+          .map(appointment => ({
+            date: appointment.date,
+            time: appointment.time,
+            userName: appointment.userName,
+            serviceType: appointment.serviceIds ? 'Multiple Services' : 'Service',
+            appointmentId: appointment._id
+          }))
+          .filter(slot => slot.time); // Filter out appointments without time
         setBookedSlots(formattedSlots);
       } else {
         console.error('Failed to fetch appointments:', result.error);

@@ -44,6 +44,33 @@ const PaymentPage = ({ onSave }) => {
       
       const result = await api.createPayment(paymentData);
       if (result.success) {
+        // Send confirmation email after successful payment
+        try {
+          const emailData = {
+            customerEmail: email || user?.email,
+            customerName: name,
+            appointmentDetails: {
+              date: location.state?.appointmentDate || '',
+              time: location.state?.appointmentTime || '',
+              services: location.state?.selectedServices || [],
+              employee: location.state?.selectedEmployee || 'Noxolo',
+              totalPrice: location.state?.totalPrice || 100,
+              totalDuration: location.state?.totalDuration || 90,
+              contactNumber: location.state?.contactNumber || '',
+              appointmentId: appointmentId
+            }
+          };
+          
+          const emailResult = await api.sendConfirmationEmail(emailData);
+          if (!emailResult.success) {
+            console.warn('Email sending failed:', emailResult.error);
+            // Don't fail the payment for email issues
+          }
+        } catch (emailError) {
+          console.warn('Email sending error:', emailError);
+          // Don't fail the payment for email issues
+        }
+        
         setApiSuccess('Payment successful!');
         setShowConfirmation(true);
         if (onSave) onSave({ method, cardNumber, expiry, cvc, country });

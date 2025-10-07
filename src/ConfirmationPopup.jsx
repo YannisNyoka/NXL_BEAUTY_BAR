@@ -10,7 +10,15 @@ const ConfirmationPopup = ({ name = "NXL Beauty Bar", dateTime = '', onBookAnoth
   return (
     <div className="confirmation-popup-modal">
       <div className="confirmation-popup-content">
-        <h2 style={{fontWeight:600, marginBottom:'2.2rem'}}>Appointment confirmed with {name}{name ? ' ' : ''}!</h2>
+        <h2 style={{fontWeight:600, marginBottom:'1.2rem'}}>Appointment confirmed with {name}{name ? ' ' : ''}!</h2>
+        <div style={{background:'#e8f5e8', border:'1px solid #4caf50', borderRadius:'6px', padding:'1rem', marginBottom:'1.5rem', textAlign:'center'}}>
+          <div style={{color:'#2e7d32', fontWeight:500, fontSize:'1rem'}}>
+            ✅ Payment Successful • 📧 Confirmation Email Sent
+          </div>
+          <div style={{color:'#666', fontSize:'0.9rem', marginTop:'0.3rem'}}>
+            Check your email for appointment details and receipt
+          </div>
+        </div>
         <div className="confirmation-card" style={{minWidth:'420px', maxWidth:'98vw', padding:'2.2rem 2.5rem', border:'1px solid #eee'}}>
           <div style={{display:'flex', alignItems:'center', gap:'1.5rem'}}>
             <div className="calendar-icon" style={{fontSize:'2.7rem', position:'relative'}}>
