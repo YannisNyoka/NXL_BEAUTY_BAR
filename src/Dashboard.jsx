@@ -455,11 +455,10 @@ function Dashboard() {
                   {getDaysInMonth(currentMonth).map((day, index) => (
                     <div 
                       key={index}
-                      className={`calendar-day ${day ? 'available' : 'empty'} ${selectedDate === day ? 'selected' : ''} ${isDateBooked(day) ? 'booked' : ''}`}
-                      onClick={() => !isDateBooked(day) && handleDateSelect(day)}
+                      className={`calendar-day ${day ? 'available' : 'empty'} ${selectedDate === day ? 'selected' : ''}`}
+                      onClick={() => day && handleDateSelect(day)}
                     >
                       {day}
-                      {isDateBooked(day) && <span className="booked-label">Booked</span>}
                     </div>
                   ))}
                 </div>
@@ -490,7 +489,18 @@ function Dashboard() {
                           <div
                             key={bIdx}
                             className="time-slot booked"
-                            style={{ background: '#ffe5e5', borderLeft: '4px solid #d17b7b', marginBottom: '4px', padding: '0.7rem 0.8rem', minHeight: '48px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}
+                            title={`Booked by: ${booking.userName}\nService: ${booking.serviceType}\nTime: ${time}`}
+                            style={{ 
+                              background: '#ffe5e5', 
+                              borderLeft: '4px solid #d17b7b', 
+                              marginBottom: '4px', 
+                              padding: '0.7rem 0.8rem', 
+                              minHeight: '48px', 
+                              display: 'flex', 
+                              flexDirection: 'column', 
+                              justifyContent: 'center',
+                              cursor: 'not-allowed'
+                            }}
                           >
                             <div style={{ fontWeight: 700, fontSize: '1rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                               {booking.userName?.length > 14 ? booking.userName.slice(0, 14) + '...' : booking.userName}
@@ -526,7 +536,18 @@ function Dashboard() {
                           <div
                             key={bIdx}
                             className="time-slot booked"
-                            style={{ background: '#ffe5e5', borderLeft: '4px solid #d17b7b', marginBottom: '4px', padding: '0.7rem 0.8rem', minHeight: '48px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}
+                            title={`Booked by: ${booking.userName}\nService: ${booking.serviceType}\nTime: ${time}`}
+                            style={{ 
+                              background: '#ffe5e5', 
+                              borderLeft: '4px solid #d17b7b', 
+                              marginBottom: '4px', 
+                              padding: '0.7rem 0.8rem', 
+                              minHeight: '48px', 
+                              display: 'flex', 
+                              flexDirection: 'column', 
+                              justifyContent: 'center',
+                              cursor: 'not-allowed'
+                            }}
                           >
                             <div style={{ fontWeight: 700, fontSize: '1rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                               {booking.userName?.length > 14 ? booking.userName.slice(0, 14) + '...' : booking.userName}
