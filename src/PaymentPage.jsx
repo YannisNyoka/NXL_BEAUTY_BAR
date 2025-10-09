@@ -3,6 +3,7 @@ import ConfirmationPopup from './ConfirmationPopup';
 import { useAuth } from './AuthContext';
 import { useLocation } from 'react-router-dom';
 import { api } from './api.js';
+import emailjs from '@emailjs/browser';
 
 
 const PaymentPage = ({ onSave }) => {
@@ -44,35 +45,78 @@ const PaymentPage = ({ onSave }) => {
       
       const result = await api.createPayment(paymentData);
       if (result.success) {
-        // Send confirmation email after successful payment
+        // Send confirmation email after successful payment using EmailJS
         try {
-          const response = await fetch('http://localhost:3001/api/send-confirmation-email', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              customerEmail: email || user?.email,
-              customerName: name,
-              appointmentDetails: {
-                date: location.state?.appointmentDate || '',
-                time: location.state?.appointmentTime || '',
-                services: location.state?.selectedServices || [],
-                employee: location.state?.selectedEmployee || 'Noxolo',
-                totalPrice: location.state?.totalPrice || 100,
-                totalDuration: location.state?.totalDuration || 90,
-                contactNumber: location.state?.contactNumber || '',
-                appointmentId: appointmentId
-              }
-            })
-          });
-
-          const emailResult = await response.json();
-          if (emailResult.success) {
-            console.log('Confirmation email sent successfully');
-          } else {
-            console.warn('Email sending failed:', emailResult.error);
-          }
+          console.log('Sending confirmation email via EmailJS...');
+          
+          const templateParams = {
+            to_email: email || user?.email,
+            customer_name: name,
+            appointment_date: location.state?.appointmentDate || dateTime || '',
+            appointment_time: location.state?.appointmentTime || '',
+            services: Array.isArray(location.state?.selectedServices) 
+              ? location.state.selectedServices.join(', ') 
+              : 'Beauty Services',
+            employee: location.state?.selectedEmployee || 'Noxolo',
+            total_price: location.state?.totalPrice || 100,
+            total_duration: location.state?.totalDuration || 90,
+            contact_number: location.state?.contactNumber || '',
+            appointment_id: appointmentId || 'N/A',
+            salon_email: 'nxlbeautybar@gmail.com',
+            salon_phone: '+27 123 456 789'
+          };
+          
+          console.log('Email template params:', templateParams);
+          
+          // TODO: Replace these with your actual EmailJS credentials
+          // Get these from your EmailJS dashboard after setup
+          const SERVICE_ID = 'service_f0lbtzg'; // Replace with your service ID
+          const TEMPLATE_ID = 'template_sbxxbi'; // Replace with your template ID  
+          const PUBLIC_KEY = 'l7AiKNhYSfG_q4eot'; // Replace with your public key
+          
+          // For now, we'll simulate the email sending since you need to set up EmailJS first
+          console.log('📧 Email would be sent with EmailJS to:', templateParams.to_email);
+          console.log('📧 Email content preview:');
+          console.log(`
+            Dear ${templateParams.customer_name},
+            
+            Your appointment at NXL Beauty Bar has been confirmed!
+            
+            📅 Date: ${templateParams.appointment_date}
+            🕒 Time: ${templateParams.appointment_time}
+            💄 Services: ${templateParams.services}
+            👩‍💼 Stylist: ${templateParams.employee}
+            💰 Total: R${templateParams.total_price}
+            ⏱️ Duration: ${templateParams.total_duration} minutes
+            📞 Contact: ${templateParams.contact_number}
+            
+            Important Information:
+            • Please arrive 10 minutes early
+            • R100 booking fee is non-refundable
+            
+            Contact us: ${templateParams.salon_email} | ${templateParams.salon_phone}
+            
+            Thank you for choosing NXL Beauty Bar!
+          `);
+          
+          // Uncomment this when you have EmailJS set up:
+          
+          const result = await emailjs.send(
+            SERVICE_ID,
+            TEMPLATE_ID, 
+            templateParams,
+            PUBLIC_KEY
+          );
+          
+          console.log('✅ Email sent successfully via EmailJS!', result);
+          setApiSuccess('Payment successful! Confirmation email sent.');
+          
+          
+          // For now, show success message
+          setApiSuccess('Payment successful! (EmailJS setup required for confirmation emails)');
+          
         } catch (emailError) {
-          console.warn('Email sending error:', emailError);
+          console.error('❌ EmailJS error:', emailError);
           // Don't fail the payment for email issues
         }
         
