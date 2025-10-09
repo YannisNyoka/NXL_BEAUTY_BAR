@@ -19,6 +19,11 @@ const PaymentPage = ({ onSave }) => {
   const [apiError, setApiError] = useState('');
   const [apiSuccess, setApiSuccess] = useState('');
 
+  // Initialize EmailJS
+  React.useEffect(() => {
+    emailjs.init('l7AiKNhYSfG_q4eot'); // Initialize with your public key
+  }, []);
+
   // Use state from navigation if available
   const name = location.state?.name || (user ? `${user.firstName} ${user.lastName}` : '');
   const dateTime = location.state?.dateTime || ''; // TODO: Replace with real booking info
@@ -68,59 +73,35 @@ const PaymentPage = ({ onSave }) => {
           
           console.log('Email template params:', templateParams);
           
-          // TODO: Replace these with your actual EmailJS credentials
-          // Get these from your EmailJS dashboard after setup
-          const SERVICE_ID = 'service_f0lbtzg'; // Replace with your service ID
-          const TEMPLATE_ID = 'template_sbxxbi'; // Replace with your template ID  
-          const PUBLIC_KEY = 'l7AiKNhYSfG_q4eot'; // Replace with your public key
+          // EmailJS credentials
+          const SERVICE_ID = 'service_f0lbtzg';
+          const TEMPLATE_ID = 'template_sbxxbi';  
+          const PUBLIC_KEY = 'l7AiKNhYSfG_q4eot';
           
-          // For now, we'll simulate the email sending since you need to set up EmailJS first
-          console.log('📧 Email would be sent with EmailJS to:', templateParams.to_email);
-          console.log('📧 Email content preview:');
-          console.log(`
-            Dear ${templateParams.customer_name},
-            
-            Your appointment at NXL Beauty Bar has been confirmed!
-            
-            📅 Date: ${templateParams.appointment_date}
-            🕒 Time: ${templateParams.appointment_time}
-            💄 Services: ${templateParams.services}
-            👩‍💼 Stylist: ${templateParams.employee}
-            💰 Total: R${templateParams.total_price}
-            ⏱️ Duration: ${templateParams.total_duration} minutes
-            📞 Contact: ${templateParams.contact_number}
-            
-            Important Information:
-            • Please arrive 10 minutes early
-            • R100 booking fee is non-refundable
-            
-            Contact us: ${templateParams.salon_email} | ${templateParams.salon_phone}
-            
-            Thank you for choosing NXL Beauty Bar!
-          `);
+          // Send email via EmailJS
+          console.log('Attempting to send email with EmailJS...');
+          console.log('Service ID:', SERVICE_ID);
+          console.log('Template ID:', TEMPLATE_ID);
+          console.log('Public Key:', PUBLIC_KEY);
           
-          // Uncomment this when you have EmailJS set up:
-          
-          const result = await emailjs.send(
+          const emailResult = await emailjs.send(
             SERVICE_ID,
             TEMPLATE_ID, 
-            templateParams,
-            PUBLIC_KEY
+            templateParams
           );
           
-          console.log('✅ Email sent successfully via EmailJS!', result);
-          setApiSuccess('Payment successful! Confirmation email sent.');
-          
-          
-          // For now, show success message
-          setApiSuccess('Payment successful! (EmailJS setup required for confirmation emails)');
+          console.log('✅ Email sent successfully via EmailJS!', emailResult);
+          setApiSuccess('Payment successful! Confirmation email sent to ' + templateParams.to_email);
           
         } catch (emailError) {
           console.error('❌ EmailJS error:', emailError);
-          // Don't fail the payment for email issues
+          console.error('EmailJS error details:', emailError.text || emailError.message);
+          
+          // Payment still succeeded, just email failed
+          setApiSuccess('Payment successful! (Email delivery failed - please contact salon for confirmation)');
         }
         
-        setApiSuccess('Payment successful!');
+        // Always show confirmation popup after payment, regardless of email status
         setShowConfirmation(true);
         if (onSave) onSave({ method, cardNumber, expiry, cvc, country });
       } else {
