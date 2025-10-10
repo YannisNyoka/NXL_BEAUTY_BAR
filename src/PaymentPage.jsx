@@ -54,44 +54,41 @@ const PaymentPage = ({ onSave }) => {
         try {
           console.log('Sending confirmation email via EmailJS...');
           
-          const templateParams = {
+          // Send email via EmailJS with standard template variables
+          console.log('Attempting to send email with EmailJS...');
+          
+          // Use the most common EmailJS template variable names
+          const emailParams = {
+            user_name: name,
+            user_email: email || user?.email,
             to_email: email || user?.email,
-            customer_name: name,
-            appointment_date: location.state?.appointmentDate || dateTime || '',
-            appointment_time: location.state?.appointmentTime || '',
-            services: Array.isArray(location.state?.selectedServices) 
-              ? location.state.selectedServices.join(', ') 
-              : 'Beauty Services',
-            employee: location.state?.selectedEmployee || 'Noxolo',
-            total_price: location.state?.totalPrice || 100,
-            total_duration: location.state?.totalDuration || 90,
-            contact_number: location.state?.contactNumber || '',
-            appointment_id: appointmentId || 'N/A',
-            salon_email: 'nxlbeautybar@gmail.com',
-            salon_phone: '+27 123 456 789'
+            subject: `Appointment Confirmed - NXL Beauty Bar`,
+            message: `Dear ${name},
+
+Your appointment at NXL Beauty Bar has been confirmed! 🎉
+
+📅 Date: ${location.state?.appointmentDate || dateTime || ''}
+🕒 Time: ${location.state?.appointmentTime || ''}
+💄 Services: ${Array.isArray(location.state?.selectedServices) ? location.state.selectedServices.join(', ') : 'Beauty Services'}
+👩‍💼 Stylist: ${location.state?.selectedEmployee || 'Noxolo'}
+💰 Total: R${location.state?.totalPrice || 100}
+
+Thank you for choosing NXL Beauty Bar!
+
+Contact us: nxlbeautybar@gmail.com | +27 123 456 789`
           };
           
-          console.log('Email template params:', templateParams);
-          
-          // EmailJS credentials
-          const SERVICE_ID = 'service_f0lbtzg';
-          const TEMPLATE_ID = 'template_sbxxbi';  
-          const PUBLIC_KEY = 'l7AiKNhYSfG_q4eot';
-          
-          // Send email via EmailJS
-          console.log('Attempting to send email with EmailJS...');
-          console.log('Service ID:', SERVICE_ID);
-          console.log('Template ID:', TEMPLATE_ID);
-          console.log('Public Key:', PUBLIC_KEY);
+          console.log('Sending email to:', emailParams.to_email);
+          console.log('Email parameters:', emailParams);
           
           const emailResult = await emailjs.send(
-            SERVICE_ID,
-            TEMPLATE_ID, 
-            templateParams
+            'service_f0lbtzg',
+            'template_sbxxbii', 
+            emailParams
           );
           
-          console.log('✅ Email sent successfully via EmailJS!', emailResult);
-          setApiSuccess('Payment successful! Confirmation email sent to ' + templateParams.to_email);
+          console.log('✅ Email sent successfully!', emailResult);
+          setApiSuccess('Payment successful! Confirmation email sent to ' + emailParams.to_email);
           
         } catch (emailError) {
           console.error('❌ EmailJS error:', emailError);
