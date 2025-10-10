@@ -57,33 +57,32 @@ const PaymentPage = ({ onSave }) => {
           // Send email via EmailJS with standard template variables
           console.log('Attempting to send email with EmailJS...');
           
-          // Use the most common EmailJS template variable names
+          // Use the correct template variables that match your EmailJS template
           const emailParams = {
-            user_name: name,
-            user_email: email || user?.email,
+            customer_name: name,
             to_email: email || user?.email,
-            subject: `Appointment Confirmed - NXL Beauty Bar`,
-            message: `Dear ${name},
-
-Your appointment at NXL Beauty Bar has been confirmed! 🎉
-
-📅 Date: ${location.state?.appointmentDate || dateTime || ''}
-🕒 Time: ${location.state?.appointmentTime || ''}
-💄 Services: ${Array.isArray(location.state?.selectedServices) ? location.state.selectedServices.join(', ') : 'Beauty Services'}
-👩‍💼 Stylist: ${location.state?.selectedEmployee || 'Noxolo'}
-💰 Total: R${location.state?.totalPrice || 100}
-
-Thank you for choosing NXL Beauty Bar!
-
-Contact us: nxlbeautybar@gmail.com | +27 123 456 789`
+            appointment_date: location.state?.appointmentDate || dateTime || '',
+            appointment_time: location.state?.appointmentTime || '',
+            services: Array.isArray(location.state?.selectedServices) 
+              ? location.state.selectedServices.join(', ') 
+              : 'Beauty Services',
+            employee: location.state?.selectedEmployee || 'Noxolo',
+            total_price: `R${location.state?.totalPrice || 100}`, // Format as "R250"
+            total_duration: `${location.state?.totalDuration || 90} minutes`, // Format as "90 minutes"
+            contact_number: location.state?.contactNumber || '',
+            salon_email: 'nxlbeautybar@gmail.com' // Add salon email if template uses it
           };
           
           console.log('Sending email to:', emailParams.to_email);
           console.log('Email parameters:', emailParams);
           
+          // Verify the correct Service ID and Template ID
+          console.log('Using Service ID: service_f0lbtzg');
+          console.log('Using Template ID: template_5d004v');
+          
           const emailResult = await emailjs.send(
             'service_f0lbtzg',
-            'template_sbxxbii', 
+            'template_5d004v', 
             emailParams
           );
           
