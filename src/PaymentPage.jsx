@@ -83,7 +83,7 @@ Contact us: nxlbeautybar@gmail.com | +27 123 456 789`
           
           const emailResult = await emailjs.send(
             'service_f0lbtzg',
-            'template_sbxxbii', 
+            '__ejs-test-mail-service__', 
             emailParams
           );
           
