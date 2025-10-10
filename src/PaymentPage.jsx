@@ -57,37 +57,38 @@ const PaymentPage = ({ onSave }) => {
           // Send email via EmailJS with standard template variables
           console.log('Attempting to send email with EmailJS...');
           
-          // Use the correct template variables that match your EmailJS template
+          // Use the exact EmailJS format that works
           const emailParams = {
             customer_name: name,
-            to_email: email || user?.email,
             appointment_date: location.state?.appointmentDate || dateTime || '',
             appointment_time: location.state?.appointmentTime || '',
             services: Array.isArray(location.state?.selectedServices) 
               ? location.state.selectedServices.join(', ') 
-              : 'Beauty Services',
+              : 'manicure',
             employee: location.state?.selectedEmployee || 'Noxolo',
-            total_price: `R${location.state?.totalPrice || 100}`, // Format as "R250"
-            total_duration: `${location.state?.totalDuration || 90} minutes`, // Format as "90 minutes"
-            contact_number: location.state?.contactNumber || '',
-            salon_email: 'nxlbeautybar@gmail.com' // Add salon email if template uses it
+            total_price: `r${location.state?.totalPrice || 250}`,
+            total_duration: `${Math.floor((location.state?.totalDuration || 90) / 60)}:${(location.state?.totalDuration || 90) % 60 || '30'}h`,
+            contact_number: location.state?.contactNumber?.replace(/\D/g, '') || '782685826',
+            salon_email: 'nxlbeautybar@gmail.com',
+            salon_phone: '782685826',
+            email: email || user?.email || 'nxlbeautybar@gmail.com'
           };
           
-          console.log('Sending email to:', emailParams.to_email);
+          console.log('Sending email to:', emailParams.email);
           console.log('Email parameters:', emailParams);
           
           // Verify the correct Service ID and Template ID
           console.log('Using Service ID: service_f0lbtzg');
-          console.log('Using Template ID: template_5d004v');
+          console.log('Using Template ID: template_sbxxbii');
           
           const emailResult = await emailjs.send(
             'service_f0lbtzg',
-            'template_5d004v', 
+            'template_sbxxbii', 
             emailParams
           );
           
           console.log('✅ Email sent successfully!', emailResult);
-          setApiSuccess('Payment successful! Confirmation email sent to ' + emailParams.to_email);
+          setApiSuccess('Payment successful! Confirmation email sent to ' + emailParams.email);
           
         } catch (emailError) {
           console.error('❌ EmailJS error:', emailError);
