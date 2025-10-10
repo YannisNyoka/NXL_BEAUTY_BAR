@@ -79,11 +79,11 @@ const PaymentPage = ({ onSave }) => {
           
           // Verify the correct Service ID and Template ID
           console.log('Using Service ID: service_f0lbtzg');
-          console.log('Using Template ID: template_sbxxbii');
+          console.log('Using Template ID: template_guxp103');
           
           const emailResult = await emailjs.send(
             'service_f0lbtzg',
-            'template_sbxxbii', 
+            'template_guxp103',
             emailParams
           );
           
