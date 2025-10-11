@@ -50,14 +50,17 @@ const PaymentPage = ({ onSave }) => {
       
       const result = await api.createPayment(paymentData);
       if (result.success) {
-        // Send confirmation email after successful payment using EmailJS
+        // Send confirmation email ONLY via EmailJS (no backend calls)
+        console.log('💳 Payment successful! Now sending email confirmation...');
+        
         try {
-          console.log('Sending confirmation email via EmailJS...');
-          
           // Ensure EmailJS is properly initialized
           if (typeof emailjs === 'undefined') {
+            console.error('EmailJS not loaded properly');
             throw new Error('EmailJS not loaded');
           }
+          
+          console.log('📧 Starting EmailJS email send process...');
           
           // Use the exact EmailJS format that works
           const emailParams = {
@@ -68,7 +71,7 @@ const PaymentPage = ({ onSave }) => {
               ? location.state.selectedServices.join(', ') 
               : 'manicure',
             employee: location.state?.selectedEmployee || 'Noxolo',
-            total_price: `r${location.state?.totalPrice || 250}`, // Fixed format: r250
+            total_price: `r${location.state?.totalPrice || 250}`,
             total_duration: `${Math.floor((location.state?.totalDuration || 90) / 60)}:${(location.state?.totalDuration || 90) % 60 || '30'}h`,
             contact_number: location.state?.contactNumber?.replace(/\D/g, '') || '782685826',
             salon_email: 'nxlbeautybar@gmail.com',
@@ -76,28 +79,23 @@ const PaymentPage = ({ onSave }) => {
             email: email || user?.email || 'nxlbeautybar@gmail.com'
           };
           
-          console.log('EmailJS Status Check:');
-          console.log('- EmailJS loaded:', typeof emailjs !== 'undefined');
+          console.log('📧 EmailJS Configuration:');
           console.log('- Service ID: service_f0lbtzg');
           console.log('- Template ID: template_sbxxbii');
-          console.log('- Sending to:', emailParams.email);
-          console.log('- Email parameters:', emailParams);
+          console.log('- Recipient:', emailParams.email);
+          console.log('- Customer:', emailParams.customer_name);
+          console.log('- Date/Time:', emailParams.appointment_date, emailParams.appointment_time);
           
-          // Add timeout to prevent hanging
-          const timeoutPromise = new Promise((_, reject) => 
-            setTimeout(() => reject(new Error('EmailJS timeout after 10 seconds')), 10000)
-          );
-          
-          const emailPromise = emailjs.send(
+          // Send email via EmailJS ONLY - no other API calls
+          console.log('🚀 Sending email via EmailJS...');
+          const emailResult = await emailjs.send(
             'service_f0lbtzg',
             'template_sbxxbii', 
             emailParams
           );
           
-          const emailResult = await Promise.race([emailPromise, timeoutPromise]);
-          
-          console.log('✅ Email sent successfully!', emailResult);
-          setApiSuccess('Payment successful! Confirmation email sent to ' + emailParams.email);
+          console.log('✅ EmailJS Success:', emailResult);
+          setApiSuccess(`Payment successful! Confirmation email sent to ${emailParams.email}`);
           
         } catch (emailError) {
           console.error('❌ EmailJS error:', emailError);
