@@ -111,11 +111,11 @@ export const api = {
 
   getPayments: () => apiCall('/api/payments'),
 
-  // Email operations
-  sendConfirmationEmail: (emailData) => apiCall('/api/send-confirmation-email', {
-    method: 'POST',
-    body: JSON.stringify(emailData),
-  }),
+  // Email operations - DISABLED: Using EmailJS instead
+  // sendConfirmationEmail: (emailData) => apiCall('/api/send-confirmation-email', {
+  //   method: 'POST',
+  //   body: JSON.stringify(emailData),
+  // }),
 };
 
 export default api;

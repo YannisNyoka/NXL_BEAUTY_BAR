@@ -52,6 +52,9 @@ const PaymentPage = ({ onSave }) => {
       if (result.success) {
         // Send confirmation email ONLY via EmailJS (no backend calls)
         console.log('💳 Payment successful! Now sending email confirmation...');
+        console.log('🔍 Environment check:');
+        console.log('- API URL:', import.meta.env.VITE_API_URL);
+        console.log('- Should NOT see localhost calls below this line');
         
         try {
           // Ensure EmailJS is properly initialized
