@@ -54,8 +54,10 @@ const PaymentPage = ({ onSave }) => {
         try {
           console.log('Sending confirmation email via EmailJS...');
           
-          // Send email via EmailJS with standard template variables
-          console.log('Attempting to send email with EmailJS...');
+          // Ensure EmailJS is properly initialized
+          if (typeof emailjs === 'undefined') {
+            throw new Error('EmailJS not loaded');
+          }
           
           // Use the exact EmailJS format that works
           const emailParams = {
@@ -66,7 +68,7 @@ const PaymentPage = ({ onSave }) => {
               ? location.state.selectedServices.join(', ') 
               : 'manicure',
             employee: location.state?.selectedEmployee || 'Noxolo',
-            total_price: `${location.state?.totalPrice || 250}`,
+            total_price: `r${location.state?.totalPrice || 250}`, // Fixed format: r250
             total_duration: `${Math.floor((location.state?.totalDuration || 90) / 60)}:${(location.state?.totalDuration || 90) % 60 || '30'}h`,
             contact_number: location.state?.contactNumber?.replace(/\D/g, '') || '782685826',
             salon_email: 'nxlbeautybar@gmail.com',
@@ -74,18 +76,25 @@ const PaymentPage = ({ onSave }) => {
             email: email || user?.email || 'nxlbeautybar@gmail.com'
           };
           
-          console.log('Sending email to:', emailParams.email);
-          console.log('Email parameters:', emailParams);
+          console.log('EmailJS Status Check:');
+          console.log('- EmailJS loaded:', typeof emailjs !== 'undefined');
+          console.log('- Service ID: service_f0lbtzg');
+          console.log('- Template ID: template_sbxxbii');
+          console.log('- Sending to:', emailParams.email);
+          console.log('- Email parameters:', emailParams);
           
-          // Verify the correct Service ID and Template ID
-          console.log('Using Service ID: service_f0lbtzg');
-          console.log('Using Template ID: template_sbxxbii');
+          // Add timeout to prevent hanging
+          const timeoutPromise = new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('EmailJS timeout after 10 seconds')), 10000)
+          );
           
-          const emailResult = await emailjs.send(
+          const emailPromise = emailjs.send(
             'service_f0lbtzg',
             'template_sbxxbii', 
             emailParams
           );
+          
+          const emailResult = await Promise.race([emailPromise, timeoutPromise]);
           
           console.log('✅ Email sent successfully!', emailResult);
           setApiSuccess('Payment successful! Confirmation email sent to ' + emailParams.email);
@@ -94,8 +103,44 @@ const PaymentPage = ({ onSave }) => {
           console.error('❌ EmailJS error:', emailError);
           console.error('EmailJS error details:', emailError.text || emailError.message);
           
+          // Check if it's a network/fetch error
+          if (emailError.message?.includes('Failed to fetch') || emailError.message?.includes('timeout')) {
+            console.error('🌐 Network issue detected. Possible causes:');
+            console.error('1. Internet connectivity problem');
+            console.error('2. EmailJS service temporarily unavailable');
+            console.error('3. Corporate firewall blocking EmailJS');
+            console.error('4. CORS policy blocking the request');
+            
+            // Try a simple fallback notification
+            try {
+              // Fallback: Log the email that should be sent
+              console.log('📧 EMAIL CONTENT THAT WOULD BE SENT:');
+              console.log('To:', emailParams.email);
+              console.log('Subject: Appointment Confirmed - NXL Beauty Bar');
+              console.log(`
+Dear ${emailParams.customer_name},
+
+Your appointment at NXL Beauty Bar has been confirmed! 🎉
+
+📅 Date: ${emailParams.appointment_date}
+🕒 Time: ${emailParams.appointment_time}
+💄 Services: ${emailParams.services}
+👩‍💼 Stylist: ${emailParams.employee}
+💰 Total: ${emailParams.total_price}
+⏱️ Duration: ${emailParams.total_duration}
+📞 Contact: ${emailParams.contact_number}
+
+Contact us: ${emailParams.salon_email} | ${emailParams.salon_phone}
+
+Thank you for choosing NXL Beauty Bar!
+              `);
+            } catch (fallbackError) {
+              console.error('Fallback also failed:', fallbackError);
+            }
+          }
+          
           // Payment still succeeded, just email failed
-          setApiSuccess('Payment successful! (Email delivery failed - please contact salon for confirmation)');
+          setApiSuccess('Payment successful! Email confirmation failed - please save appointment details.');
         }
         
         // Always show confirmation popup after payment, regardless of email status
