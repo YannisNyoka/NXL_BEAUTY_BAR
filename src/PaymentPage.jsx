@@ -74,7 +74,7 @@ const PaymentPage = ({ onSave }) => {
               ? location.state.selectedServices.join(', ') 
               : 'manicure',
             employee: location.state?.selectedEmployee || 'Noxolo',
-            total_price: `r${location.state?.totalPrice || 250}`,
+            total_price: `${location.state?.totalPrice || 250}`,
             total_duration: `${Math.floor((location.state?.totalDuration || 90) / 60)}:${(location.state?.totalDuration || 90) % 60 || '30'}h`,
             contact_number: location.state?.contactNumber?.replace(/\D/g, '') || '782685826',
             salon_email: 'nxlbeautybar@gmail.com',

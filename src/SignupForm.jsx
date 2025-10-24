@@ -15,7 +15,7 @@ function SignupForm() {
   const [loading, setLoading] = useState(false);
   const [apiError, setApiError] = useState('');
   const [apiSuccess, setApiSuccess] = useState('');
-  
+
   const navigate = useNavigate();
 
   const validate = () => {
@@ -58,10 +58,10 @@ function SignupForm() {
             firstName: '',
             lastName: ''
           });
-          
+
           // Navigate back to home after successful signup
           setTimeout(() => {
-            navigate('/');
+            navigate('/', { state: { user: form } });
           }, 2000);
         } else {
           setApiError(result.error || 'Signup failed. Please try again.');
@@ -84,81 +84,81 @@ function SignupForm() {
         <h1>Join NXL Beauty Bar</h1>
         <p className="signup-subtitle">Create your account to start booking your nail appointments</p>
       </div>
-      
+
       <form className="signup-form" onSubmit={handleSubmit} noValidate>
         <div className="form-group">
           <label>First Name</label>
-          <input 
-            type="text" 
-            name="firstName" 
-            value={form.firstName} 
-            onChange={handleChange} 
+          <input
+            type="text"
+            name="firstName"
+            value={form.firstName}
+            onChange={handleChange}
             disabled={loading}
             placeholder="Enter your first name"
           />
           {errors.firstName && <span className="error">{errors.firstName}</span>}
         </div>
-        
+
         <div className="form-group">
           <label>Last Name</label>
-          <input 
-            type="text" 
-            name="lastName" 
-            value={form.lastName} 
-            onChange={handleChange} 
+          <input
+            type="text"
+            name="lastName"
+            value={form.lastName}
+            onChange={handleChange}
             disabled={loading}
             placeholder="Enter your last name"
           />
           {errors.lastName && <span className="error">{errors.lastName}</span>}
         </div>
-        
+
         <div className="form-group">
           <label>Email Address</label>
-          <input 
-            type="email" 
-            name="email" 
-            value={form.email} 
-            onChange={handleChange} 
+          <input
+            type="email"
+            name="email"
+            value={form.email}
+            onChange={handleChange}
             disabled={loading}
             placeholder="Enter your email address"
           />
           {errors.email && <span className="error">{errors.email}</span>}
         </div>
-        
+
         <div className="form-group">
           <label>Password</label>
-          <input 
-            type="password" 
-            name="password" 
-            value={form.password} 
-            onChange={handleChange} 
+          <input
+            type="password"
+            name="password"
+            value={form.password}
+            onChange={handleChange}
             disabled={loading}
             placeholder="Create a strong password"
           />
           {errors.password && <span className="error">{errors.password}</span>}
         </div>
-        
+
         <div className="form-group">
           <label>Confirm Password</label>
-          <input 
-            type="password" 
-            name="confirmPassword" 
-            value={form.confirmPassword} 
-            onChange={handleChange} 
+          <input
+            type="password"
+            name="confirmPassword"
+            value={form.confirmPassword}
+            onChange={handleChange}
             disabled={loading}
             placeholder="Confirm your password"
           />
           {errors.confirmPassword && <span className="error">{errors.confirmPassword}</span>}
         </div>
-        
+
         <button type="submit" disabled={loading}>
           {loading ? 'Creating Account...' : 'Create Account'}
         </button>
-        
+
         {apiSuccess && <div className="success">{apiSuccess}</div>}
         {apiError && <div className="error">{apiError}</div>}
       </form>
-      
+
       <div className="signup-footer">
         <p>Already have an account? <Link to="/login" className="login-link">Sign In</Link></p>
         <Link to="/" className="back-home">← Back to Home</Link>
