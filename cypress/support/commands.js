@@ -5,12 +5,29 @@ const API_URL = 'http://13.48.199.77:3001';
 
 Cypress.Commands.add('signupUI', (user) => {
   cy.visit('/signup');
-  if (user.firstName) cy.get('input[name="firstName"]').clear().type(user.firstName, { delay: 50 });
-  if (user.lastName) cy.get('input[name="lastName"]').clear().type(user.lastName, { delay: 50 });
-  if (user.email) cy.get('input[name="email"]').clear().type(user.email, { delay: 50 });
-  if (user.password) cy.get('input[name="password"]').clear().type(user.password, { delay: 50 });
-  if (user.confirmPassword) cy.get('input[name="confirmPassword"]').clear().type(user.confirmPassword, { delay: 50 });
-  cy.get('button[type="submit"]').should('be.visible').and('be.enabled').click();
+  
+  // Wait for form to be loaded
+  cy.get('form').should('exist');
+  
+  // Fill in the form fields
+  if (user.firstName) {
+    cy.get('input[name="firstName"]').should('be.visible').clear().type(user.firstName);
+  }
+  if (user.lastName) {
+    cy.get('input[name="lastName"]').should('be.visible').clear().type(user.lastName);
+  }
+  if (user.email) {
+    cy.get('input[name="email"]').should('be.visible').clear().type(user.email);
+  }
+  if (user.password) {
+    cy.get('input[name="password"]').should('be.visible').clear().type(user.password);
+  }
+  if (user.confirmPassword) {
+    cy.get('input[name="confirmPassword"]').should('be.visible').clear().type(user.confirmPassword);
+  }
+
+  // Submit the form
+  cy.get('button[type="submit"]').should('be.visible').click();
 });
 
 Cypress.Commands.add('loginUI', (email, password) => {

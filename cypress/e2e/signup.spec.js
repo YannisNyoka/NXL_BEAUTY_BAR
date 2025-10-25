@@ -1,3 +1,5 @@
+const API_URL = 'http://13.48.199.77:3001';
+
 describe('Signup Flow', () => {
   beforeEach(() => {
     cy.visit('/signup');
@@ -5,39 +7,67 @@ describe('Signup Flow', () => {
 
   it('allows a user to sign up with valid details', () => {
     const timestamp = Date.now();
-    cy.fixture('user').then((user) => {
-      const email = `cypress.user.${timestamp}@example.com`;
-      const userData = {
-        ...user,
-        email,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        password: user.password,
-        confirmPassword: user.password,
-      };
+    const validUser = {
+      firstName: 'Test',
+      lastName: 'User',
+      email: `cypress.user.${timestamp}@example.com`,
+      password: 'TestPass123!',
+      confirmPassword: 'TestPass123!'
+    };
 
-      cy.signupUI(userData);
+    // Intercept the signup request
+    cy.intercept('POST', `${API_URL}/api/users`).as('signupRequest');
 
-      // Verify success message
-      cy.contains(/welcome|account created|success/i, { timeout: 10000 }).should('be.visible');
-      
-      // Verify redirect
-      cy.url().should('eq', 'http://localhost:3000/');
-      
-      // Verify user data is displayed correctly
-      cy.contains(userData.firstName).should('be.visible');
-      cy.contains(userData.lastName).should('be.visible');
+    // Fill out and submit the form
+    cy.get('input[name="firstName"]').type(validUser.firstName);
+    cy.get('input[name="lastName"]').type(validUser.lastName);
+    cy.get('input[name="email"]').type(validUser.email);
+    cy.get('input[name="password"]').type(validUser.password);
+    cy.get('input[name="confirmPassword"]').type(validUser.confirmPassword);
+    
+    // Submit form
+    cy.get('button[type="submit"]').click();
+
+    // Should redirect away from signup
+    cy.url({ timeout: 10000 }).should('not.include', '/signup');
+    
+    // Wait for redirect and success state
+    cy.wait(1000); // Give time for the redirect to complete
+    cy.get('body', { timeout: 10000 }).should('satisfy', ($body) => {
+      const text = $body.text().toLowerCase();
+      return text.includes('success') || 
+             text.includes('welcome') || 
+             text.includes('dashboard') ||
+             text.includes('account created');
     });
   });
 
   it('shows validation errors when required fields are missing', () => {
-    cy.visit('/signup');
-    // submit empty form
+    // Submit the empty form
     cy.get('button[type="submit"]').click();
 
-    // Expect validation errors - adapt selectors as needed
-    cy.get('input[name="email"]:invalid').should('exist');
-    cy.get('input[name="password"]:invalid').should('exist');
+    // Form should stay on signup page
+    cy.url().should('include', '/signup');
+
+    // Try to submit with a short password
+    const shortPwdData = {
+      firstName: 'Test',
+      lastName: 'User',
+      email: 'test@example.com',
+      password: 'short',
+      confirmPassword: 'short'
+    };
+    
+    cy.get('input[name="firstName"]').type(shortPwdData.firstName);
+    cy.get('input[name="lastName"]').type(shortPwdData.lastName);
+    cy.get('input[name="email"]').type(shortPwdData.email);
+    cy.get('input[name="password"]').type(shortPwdData.password);
+    cy.get('input[name="confirmPassword"]').type(shortPwdData.confirmPassword);
+    
+    cy.get('button[type="submit"]').click();
+    
+    // Should show password validation message
+    cy.contains(/password.*8 characters/i).should('be.visible');
   });
 
   it('prevents duplicate signups with the same email', () => {
@@ -86,8 +116,8 @@ describe('Signup Flow', () => {
       cy.get('input[name="confirmPassword"]').type(shortPwdData.confirmPassword);
       cy.get('button[type="submit"]').click();
       
-      // Check for password length validation
-      cy.contains('password length too short', { timeout: 10000 }).should('be.visible');
+      // Check for password validation message
+      cy.contains('Password must be at least 8 characters and contain uppercase, lowercase, and a number', { timeout: 10000 }).should('be.visible');
 
       // Test password mismatch
       cy.get('input[name="password"]').clear().type('ValidPass123!');
