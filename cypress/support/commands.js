@@ -31,39 +31,31 @@ Cypress.Commands.add('signupUI', (user) => {
 });
 
 Cypress.Commands.add('loginUI', (email, password) => {
+  // Visit login page and wait for it to load
   cy.visit('/login');
+  cy.get('form').should('exist');
+  
+  // Fill in credentials
   cy.get('input[name="email"]').clear().type(email, { delay: 50 });
   cy.get('input[name="password"]').clear().type(password, { delay: 50 });
+  
+  // Submit the form
   cy.get('button[type="submit"]').should('be.visible').and('be.enabled').click();
 });
 
-Cypress.Commands.add('addProductToCart', (productName) => {
-  cy.visit('/products');
-  cy.intercept('POST', '**/cart').as('addToCart');
+Cypress.Commands.add('selectService', (serviceName) => {
+  // Go to dashboard where services can be selected
+  cy.visit('/dashboard');
   
-  // Try to find a product by visible text or button label
-  cy.contains(productName)
-    .should('be.visible')
-    .closest('article, .product, .card')
-    .within(() => {
-      // prefer a button with add-to-cart text
-      cy.get('button')
-        .contains(/add to cart|add|buy/i)
-        .should('be.visible')
-        .and('be.enabled')
-        .click();
-    });
-
-  // Wait for the network request to complete
-  cy.wait('@addToCart').its('response.statusCode').should('be.oneOf', [200, 201]);
-});
-
-// Utility command for clearing the cart
-Cypress.Commands.add('clearCart', () => {
-  cy.get('a[href="/cart"], .cart-icon, button[aria-label="cart"]').click({ force: true });
-  cy.get('tr, li, .cart-item').each(($item) => {
-    cy.wrap($item).within(() => {
-      cy.get('button').contains(/remove|delete|×/i).click();
-    });
+  // Ensure services panel is expanded
+  cy.get('.booking-panel').first().then($panel => {
+    if ($panel.find('.dropdown-arrow.collapsed').length > 0) {
+      cy.wrap($panel).find('.panel-header').click();
+    }
   });
+  
+  // Select the service by clicking it
+  cy.get('.panel-content .service-item')
+    .contains(serviceName)
+    .click();
 });
