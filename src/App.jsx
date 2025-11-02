@@ -6,7 +6,9 @@ import LoginForm from './LoginForm.jsx';
 import Dashboard from './Dashboard.jsx';
 import UserProfile from './UserProfile.jsx';
 import ProtectedRoute from './ProtectedRoute.jsx';
+import AdminProtectedRoute from './AdminProtectedRoute.jsx';
 import PaymentPage from './PaymentPage.jsx';
+import AdminDashboard from './AdminDashboard.jsx';
 
 
 function App() {
@@ -33,6 +35,14 @@ function App() {
           } 
         />
         <Route path="/payment" element={<PaymentPage />} />
+        <Route 
+          path="/admin" 
+          element={
+            <AdminProtectedRoute>
+              <AdminDashboard />
+            </AdminProtectedRoute>
+          } 
+        />
       </Routes>
     </div>
   );

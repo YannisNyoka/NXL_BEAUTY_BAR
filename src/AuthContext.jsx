@@ -23,6 +23,7 @@ export const AuthProvider = ({ children }) => {
   const logout = () => {
     setUser(null);
     setIsAuthenticated(false);
+    localStorage.removeItem('isAdmin');
   };
 
   // Function to trigger appointment refresh across all components

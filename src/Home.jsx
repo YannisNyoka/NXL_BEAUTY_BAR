@@ -82,8 +82,7 @@ function Home() {
         <div style={{
           padding: '10px', 
           margin: '10px 0', 
-          backgroundColor: isConnected ? '#d4edda' : isWarning ? '#fff3cd' : '#f8d7da',
-          color: isConnected ? '#155724' : isWarning ? '#856404' : '#721c24',
+         
           borderRadius: '5px',
           fontSize: '14px',
           textAlign: 'center',
@@ -94,10 +93,9 @@ function Home() {
         }}>
           <span aria-hidden="true" style={{display:'inline-flex'}}>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M12 18.5c.9 0 1.5.6 1.5 1.5S12.9 21.5 12 21.5 10.5 20.9 10.5 20 11.1 18.5 12 18.5Zm-3.3-2.9c.8-.8 1.9-1.3 3.3-1.3s2.5.5 3.3 1.3c.3.3.3.8 0 1.1-.3.3-.8.3-1.1 0-.5-.5-1.2-.8-2.2-.8s-1.7.3-2.2.8c-.3.3-.8.3-1.1 0-.3-.3-.3-.8 0-1.1Zm-3.3-3.2C7.4 10.4 9.6 9.5 12 9.5s4.6.9 6.6 2.9c.3.3.3.8 0 1.1-.3.3-.8.3-1.1 0-1.7-1.7-3.6-2.5-5.5-2.5s-3.8.8-5.5 2.5c-.3.3-.8.3-1.1 0-.3-.3-.3-.8 0-1.1ZM12 3.5c3.2 0 6.2 1.2 8.8 3.8.3.3.3.8 0 1.1-.3.3-.8.3-1.1 0C17.6 6.3 14.9 5.5 12 5.5S6.4 6.3 4.3 8.4c-.3.3-.8.3-1.1 0-.3-.3-.3-.8 0-1.1C5.8 4.7 8.8 3.5 12 3.5Z" fill="${wifiColor}"/>
+              <path d="M12 18.5c.9 0 1.5.6 1.5 1.5S12.9 21.5 12 21.5 10.5 20.9 10.5 20 11.1 18.5 12 18.5Zm-3.3-2.9c.8-.8 1.9-1.3 3.3-1.3s2.5.5 3.3 1.3c.3.3.3.8 0 1.1-.3.3-.8.3-1.1 0-.5-.5-1.2-.8-2.2-.8s-1.7.3-2.2.8c-.3.3-.8.3-1.1 0-.3-.3-.3-.8 0-1.1Zm-3.3-3.2C7.4 10.4 9.6 9.5 12 9.5s4.6.9 6.6 2.9c.3.3.3.8 0 1.1-.3.3-.8.3-1.1 0-1.7-1.7-3.6-2.5-5.5-2.5s-3.8.8-5.5 2.5c-.3.3-.8.3-1.1 0-.3-.3-.3-.8 0-1.1ZM12 3.5c3.2 0 6.2 1.2 8.8 3.8.3.3.3.8 0 1.1-.3.3-.8.3-1.1 0C17.6 6.3 14.9 5.5 12 5.5S6.4 6.3 4.3 8.4c-.3.3-.8.3-1.1 0-.3-.3-.3-.8 0-1.1C5.8 4.7 8.8 3.5 12 3.5Z" fill={wifiColor}/>
             </svg>
           </span>
-          <span>Backend Status: {connectionStatus}</span>
         </div>
         
         <p className="hero-subtitle">READY TO GIVE YOUR NAILS THE CARE THEY DESERVE?</p>
@@ -171,6 +169,7 @@ function Home() {
           <Link to="/login" className="nav-link secondary">Sign In</Link>
           <Link to="/dashboard" className="nav-link secondary">Dashboard </Link>
         </div>
+
       </div>
 
       {/* Contact Info */}

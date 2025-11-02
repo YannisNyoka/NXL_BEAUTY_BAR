@@ -30,6 +30,8 @@ function LoginForm() {
     setApiError('');
     setApiSuccess('');
   };
+  
+
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -50,7 +52,8 @@ function LoginForm() {
             email: form.email,
             firstName: 'User',
             lastName: '',
-            id: result.data.userId
+            id: result.data.userId,
+            isAdmin: form.email === 'admin@nxlbeautybar.com'
           };
           
           // Find the current user in the users list
@@ -61,17 +64,27 @@ function LoginForm() {
                 email: form.email,
                 firstName: currentUser.firstName || 'User',
                 lastName: currentUser.lastName || '',
-                id: currentUser._id || result.data.userId
+                id: currentUser._id || result.data.userId,
+                isAdmin: currentUser.isAdmin || form.email === 'admin@nxlbeautybar.com'
               };
+              
+              // Set isAdmin flag in localStorage if user is admin
+              if (currentUser.isAdmin || form.email === 'admin@nxlbeautybar.com') {
+                localStorage.setItem('isAdmin', 'true');
+              }
             }
           }
           
           // Login the user
           login(userData);
           
-          // Navigate to dashboard after successful login
+          // Navigate based on user role or email
           setTimeout(() => {
-            navigate('/dashboard');
+            if (userData.isAdmin || form.email === 'admin@nxlbeautybar.com') {
+              navigate('/admin');
+            } else {
+              navigate('/dashboard');
+            }
           }, 1500);
           
           setForm({
@@ -131,6 +144,8 @@ function LoginForm() {
         {apiError && <div className="error">{apiError}</div>}
       </form>
       
+
+      
       <div className="signup-footer">
         <p>Don't have an account? <Link to="/signup" className="login-link">Create Account</Link></p>
         <Link to="/" className="back-home">← Back to Home</Link>
@@ -139,4 +154,4 @@ function LoginForm() {
   );
 }
 
-export default LoginForm; 
+export default LoginForm;
