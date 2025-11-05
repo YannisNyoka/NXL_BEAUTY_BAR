@@ -56,13 +56,34 @@ function Dashboard() {
     employee: false
   });
 
-  const services = [
-    { name: 'Manicure', duration: 45, price: 150 },
-    { name: 'Pedicure', duration: 20, price: 100 },
-    { name: 'Lashes', duration: 30, price: 120 },
-    { name: 'Tinting', duration: 20, price: 80 }
-  ];
-
+  // Load services from localStorage (admin-managed), fall back to defaults
+  const [services, setServices] = useState([]);
+  useEffect(() => {
+      const saved = localStorage.getItem('services');
+      if (saved) {
+          try {
+              const parsed = JSON.parse(saved);
+              if (Array.isArray(parsed)) {
+                  // Convert admin services to user format if needed
+                  setServices(parsed.map(s => ({
+                      name: s.name,
+                      duration: s.duration,
+                      price: s.price
+                  })));
+                  return;
+              }
+          } catch (e) {
+              // ignore JSON errors
+          }
+      }
+      // Fallback defaults if nothing saved yet
+      setServices([
+          { name: 'Manicure', duration: 45, price: 150 },
+          { name: 'Pedicure', duration: 20, price: 100 },
+          { name: 'Lashes', duration: 30, price: 120 },
+          { name: 'Tinting', duration: 20, price: 80 }
+      ]);
+  }, []);
   const timeSlots = {
     morning: [
       '09:00 am', '10:30 am'
@@ -476,7 +497,7 @@ function Dashboard() {
         {/* Time Selection Panel */}
         <div className="booking-panel">
           <div className="panel-header" onClick={() => togglePanel('time')}>
-            <h3>SELECT TIME</h3>
+            <h3>TIME SLOTS</h3>
             <span className={`dropdown-arrow ${collapsedPanels.time ? 'collapsed' : ''}`}>
               {collapsedPanels.time ? '▶' : '▼'}
             </span>

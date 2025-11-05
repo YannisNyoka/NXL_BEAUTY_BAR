@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from './AuthContext';
 import { api } from './api';
@@ -24,6 +24,30 @@ function AdminDashboard() {
   const [editingService, setEditingService] = useState(null);
   const [showServiceForm, setShowServiceForm] = useState(false);
   const [serviceForm, setServiceForm] = useState({ name: '', duration: '', price: '' });
+  
+  // Persist services to localStorage and hydrate on load
+  const servicesInitializedRef = useRef(false);
+  
+  useEffect(() => {
+    const saved = localStorage.getItem('services');
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) {
+          setServices(parsed);
+        }
+      } catch (e) {
+        // ignore JSON errors
+      }
+    }
+    servicesInitializedRef.current = true;
+  }, []);
+  
+  useEffect(() => {
+    if (servicesInitializedRef.current) {
+      localStorage.setItem('services', JSON.stringify(services));
+    }
+  }, [services]);
   
   // Unavailable dates/time slots state
   const [unavailableSlots, setUnavailableSlots] = useState([]);
