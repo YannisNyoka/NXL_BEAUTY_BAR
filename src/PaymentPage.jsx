@@ -217,7 +217,7 @@ Thank you for choosing NXL Beauty Bar!
             )}
             {/* Google Pay and PayPal can be implemented as needed */}
             <button type="submit" className="save-btn" disabled={loading} style={{width:'50%', background:'#c68d8dff', color:'#f30707ff', fontWeight:700, fontSize:'1.2rem', borderRadius:'7px', border:'none', padding :'0.9rem 0', marginTop:'0.7rem', marginBottom:'0.2rem', cursor:'pointer'}}>
-              {loading ? 'Processing...' : 'Save'}
+              {loading ? 'Processing...' : 'Save billing info & Pay'}
             </button>
             {apiError && <div style={{color:'red', marginTop:'0.5rem', fontWeight:500}}>{apiError}</div>}
             {apiSuccess && <div style={{color:'green', marginTop:'0.5rem', fontWeight:500}}>{apiSuccess}</div>}
