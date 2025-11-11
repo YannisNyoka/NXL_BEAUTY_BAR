@@ -56,33 +56,48 @@ function Dashboard() {
     employee: false
   });
 
-  // Load services from localStorage (admin-managed), fall back to defaults
-  const [services, setServices] = useState([]);
-  useEffect(() => {
+  // Load services from localStorage immediately (admin-managed) with fallback defaults
+  const [services, setServices] = useState(() => {
+    try {
       const saved = localStorage.getItem('services');
       if (saved) {
-          try {
-              const parsed = JSON.parse(saved);
-              if (Array.isArray(parsed)) {
-                  // Convert admin services to user format if needed
-                  setServices(parsed.map(s => ({
-                      name: s.name,
-                      duration: s.duration,
-                      price: s.price
-                  })));
-                  return;
-              }
-          } catch (e) {
-              // ignore JSON errors
-          }
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) {
+          return parsed.map(s => ({
+            name: s.name,
+            duration: s.duration,
+            price: s.price
+          }));
+        }
       }
-      // Fallback defaults if nothing saved yet
-      setServices([
-          { name: 'Manicure', duration: 45, price: 150 },
-          { name: 'Pedicure', duration: 20, price: 100 },
-          { name: 'Lashes', duration: 30, price: 120 },
-          { name: 'Tinting', duration: 20, price: 80 }
-      ]);
+    } catch {}
+    // Fallback defaults if nothing saved yet
+    return [
+      { name: 'Manicure', duration: 45, price: 150 },
+      { name: 'Pedicure', duration: 20, price: 100 },
+      { name: 'Lashes', duration: 30, price: 120 },
+      { name: 'Tinting', duration: 20, price: 80 }
+    ];
+  });
+
+  // Reflect admin changes across tabs/windows without reload
+  useEffect(() => {
+    const onStorage = (e) => {
+      if (e.key === 'services') {
+        try {
+          const parsed = JSON.parse(e.newValue || '[]');
+          if (Array.isArray(parsed)) {
+            setServices(parsed.map(s => ({
+              name: s.name,
+              duration: s.duration,
+              price: s.price
+            })));
+          }
+        } catch {}
+      }
+    };
+    window.addEventListener('storage', onStorage);
+    return () => window.removeEventListener('storage', onStorage);
   }, []);
   const timeSlots = {
     morning: [
@@ -560,30 +575,33 @@ function Dashboard() {
                     return (
                       <div key={index} className="time-slot-stack">
                         {bookings.map((booking, bIdx) => (
-                          <div
-                            key={bIdx}
-                            className="time-slot booked"
-                            title={`Booked by: ${booking.userName}\nService: ${booking.serviceType}\nTime: ${time}`}
-                            style={{ 
-                              background: '#ffe5e5', 
-                              borderLeft: '4px solid #d17b7b', 
-                              marginBottom: '4px', 
-                              padding: '0.7rem 0.8rem', 
-                              minHeight: '48px', 
-                              display: 'flex', 
-                              flexDirection: 'column', 
-                              justifyContent: 'center',
-                              cursor: 'not-allowed'
-                            }}
-                          >
-                            <div style={{ fontWeight: 700, fontSize: '1rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                              {booking.userName?.length > 14 ? booking.userName.slice(0, 14) + '...' : booking.userName}
-                            </div>
-                            <div style={{ fontSize: '0.98rem', color: '#222', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                              {booking.serviceType?.length > 18 ? booking.serviceType.slice(0, 18) + '...' : booking.serviceType || ''}
-                            </div>
-                          </div>
-                        ))}
+  <div
+    key={bIdx}
+    className="time-slot booked"
+    title={`Booked\nTime: ${time}`}
+    style={{ 
+      background: '#ffe5e5', 
+      borderLeft: '4px solid #d17b7b', 
+      marginBottom: '4px', 
+      padding: '0.7rem 0.8rem', 
+      minHeight: '48px', 
+      display: 'flex', 
+      flexDirection: 'column', 
+      justifyContent: 'center',
+      alignItems: 'center',
+      cursor: 'not-allowed'
+    }}
+  >
+    <div style={{ 
+      fontWeight: 700, 
+      fontSize: '1rem', 
+      color: '#222' 
+    }}>
+      Booked
+    </div>
+  </div>
+))}
+
                         {bookings.length === 0 && (
                           <div
                             className={`time-slot ${selectedTime === time ? 'selected' : ''}`}

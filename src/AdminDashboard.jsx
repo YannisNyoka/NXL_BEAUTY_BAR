@@ -52,7 +52,29 @@ function AdminDashboard() {
   // Unavailable dates/time slots state
   const [unavailableSlots, setUnavailableSlots] = useState([]);
   const [showUnavailableForm, setShowUnavailableForm] = useState(false);
-  const [unavailableForm, setUnavailableForm] = useState({ date: '', time: '', reason: '' });
+  const [unavailableForm, setUnavailableForm] = useState({ date: '', time: '', reason: '', stylist: 'All' });
+  const unavailabilityInitializedRef = useRef(false);
+  
+  useEffect(() => {
+    const savedUnavailability = localStorage.getItem('unavailableSlots');
+    if (savedUnavailability) {
+      try {
+        const parsed = JSON.parse(savedUnavailability);
+        if (Array.isArray(parsed)) {
+          setUnavailableSlots(parsed);
+        }
+      } catch (e) {
+        // ignore JSON errors
+      }
+    }
+    unavailabilityInitializedRef.current = true;
+  }, []);
+  
+  useEffect(() => {
+    if (unavailabilityInitializedRef.current) {
+      localStorage.setItem('unavailableSlots', JSON.stringify(unavailableSlots));
+    }
+  }, [unavailableSlots]);
   
   // Stats state
   const [stats, setStats] = useState({
@@ -214,11 +236,12 @@ function AdminDashboard() {
       id: Date.now(),
       date: unavailableForm.date,
       time: unavailableForm.time,
-      reason: unavailableForm.reason
+      reason: unavailableForm.reason,
+      stylist: unavailableForm.stylist || 'All'
     };
     setUnavailableSlots([...unavailableSlots, newSlot]);
     setShowUnavailableForm(false);
-    setUnavailableForm({ date: '', time: '', reason: '' });
+    setUnavailableForm({ date: '', time: '', reason: '', stylist: 'All' });
   };
   
   const handleUnavailableDelete = (id) => {
@@ -522,7 +545,18 @@ function AdminDashboard() {
                   placeholder="e.g., October 2025 10"
                 />
               </div>
-              
+              <div style={styles.formGroup}>
+                <label style={styles.label}>Stylist:</label>
+                <select
+                  value={unavailableForm.stylist}
+                  onChange={(e) => setUnavailableForm({ ...unavailableForm, stylist: e.target.value })}
+                  style={styles.input}
+                >
+                  <option value="All">All Stylists</option>
+                  <option value="Noxolo">Noxolo</option>
+                  <option value="Thandi">Thandi</option>
+                </select>
+              </div>
               <div style={styles.formGroup}>
                 <label style={styles.label}>Time:</label>
                 <input
@@ -534,7 +568,6 @@ function AdminDashboard() {
                   placeholder="e.g., 12:00 pm"
                 />
               </div>
-              
               <div style={styles.formGroup}>
                 <label style={styles.label}>Reason (optional):</label>
                 <input
@@ -545,7 +578,6 @@ function AdminDashboard() {
                   placeholder="e.g., Holiday"
                 />
               </div>
-              
               <div style={styles.modalActions}>
                 <button type="submit" style={{ ...styles.actionBtn, backgroundColor: '#28a745' }}>
                   Add Unavailable
@@ -562,7 +594,6 @@ function AdminDashboard() {
           </div>
         </div>
       )}
-      
       <div style={styles.unavailableList}>
         {unavailableSlots.length === 0 ? (
           <div style={styles.emptyMessage}>No unavailable slots marked</div>
@@ -572,6 +603,9 @@ function AdminDashboard() {
               <div style={styles.unavailableInfo}>
                 <div style={styles.unavailableDate}>{slot.date}</div>
                 <div style={styles.unavailableTime}>{slot.time}</div>
+                <div style={{ fontStyle: 'italic', color: '#555' }}>
+                  {slot.stylist === 'All' ? 'All Stylists' : slot.stylist}
+                </div>
                 {slot.reason && <div style={styles.unavailableReason}>{slot.reason}</div>}
               </div>
               <button
