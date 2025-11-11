@@ -165,7 +165,7 @@ Thank you for choosing NXL Beauty Bar!
     <div className="payment-bg">
       <div className="payment-center">
         <h2 className="payment-title" style={{fontWeight:700, fontSize:'2rem', marginTop:'2.5rem', marginBottom:'2.5rem', textAlign:'center', letterSpacing:'0.5px'}}>
-          A none Refundeble  Booking fee of R100 will be<br />charged to Secure your Booking
+          A none Refundable  Booking fee of R100 will be<br />charged to Secure your Booking
         </h2>
         <div className="payment-card">
           <form className="payment-form" onSubmit={handleSubmit}>
