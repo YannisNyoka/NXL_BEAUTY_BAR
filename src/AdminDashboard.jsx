@@ -948,15 +948,7 @@ function AdminDashboard() {
           >
             🚫 Availability
           </button>
-          <button
-            onClick={() => handleNavClick('settings')}
-            style={{
-              ...styles.navButton,
-              backgroundColor: activeTab === 'settings' ? '#f0f0f0' : 'transparent'
-            }}
-          >
-            ⚙️ Settings
-          </button>
+          
           
           <button
             onClick={handleLogout}

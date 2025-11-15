@@ -175,16 +175,28 @@ function Home() {
       {/* Contact Info */}
       <div className="contact-info">
         <div className="contact-item">
-          <span className="contact-icon">📞</span>
-          <span>(+27)68 511-3394</span>
+          <span className="contact-icon">📘
+
+</span>
+          <span><a href="https://www.facebook.com/share/17g73Pcr9j/" target="_blank" rel="noopener noreferrer">
+  Facebook
+</a>
+</span>
         </div>
         <div className="contact-item">
-          <span className="contact-icon">📧</span>
-          <span>NXLBEAUTYBAR@GMAIL.COM</span>
+          <span className="contact-icon">📸
+</span>
+          <span><a href="https://www.instagram.com/nxlbeauty?igsh=Z2tnOTl0OXdmdmxz" target="_blank" rel="noopener noreferrer">
+  instagram
+</a>
+</span>
         </div>
         <div className="contact-item">
           <span className="contact-icon">📱</span>
-          <span>@nxlbeauty</span>
+          <span ><a href="https://www.tiktok.com/@nxlbeautybar?_r=1&_t=ZS-91Q3zPzMphH" target="_blank" rel="noopener noreferrer">
+   TikTok
+</a>
+</span>
         </div>
       </div>
 
