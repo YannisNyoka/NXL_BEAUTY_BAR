@@ -115,8 +115,73 @@ function Dashboard() {
 
   // Change bookedSlots to state and include userName - now fetched from API
   const [bookedSlots, setBookedSlots] = useState([]);
-  const [loadingAppointments, setLoadingAppointments] = useState(true);
+function Dashboard() {
+    // ... existing code ...
+    const getBookingsForSlot = (date, time) => {
+      const monthName = getMonthName(currentMonth);
+      const slotDate = `${monthName} ${date}`;
+      return bookedSlots.filter(slot => slot.date === slotDate && slot.time === time && isFutureOrPresentSlot(slot.date, slot.time));
+    };
+    const isSlotUnavailable = (date, time) => {
+      const monthName = getMonthName(currentMonth);
+      const slotDate = `${monthName} ${date}`;
+      return unavailableSlots.some(
+        s => s.date === slotDate && s.time === time && (s.stylist === 'All' || s.stylist === selectedEmployee)
+      );
+    };
+    // ... existing code ...
+}  const [loadingAppointments, setLoadingAppointments] = useState(true);
+  const [unavailableSlots, setUnavailableSlots] = useState([]);
 
+  const parseSlotDateTime = (slot) => {
+    try {
+      const [month, year, day] = (slot?.date || '').split(' ');
+      const base = new Date(`${month} ${day}, ${year}`);
+      if (!isFinite(base)) return new Date(0);
+
+      if (slot?.time) {
+        const [hh, mm] = slot.time.split(':').map(Number);
+        base.setHours(hh || 0, mm || 0, 0, 0);
+      } else {
+        base.setHours(23, 59, 59, 999);
+      }
+      return base;
+    } catch {
+      return new Date(0);
+    }
+  };
+
+  const pruneExpiredUnavailableSlots = (slots) => {
+    const now = new Date();
+    return (Array.isArray(slots) ? slots : []).filter((s) => parseSlotDateTime(s) >= now);
+  };
+
+  // Load from localStorage on mount
+  useEffect(() => {
+    let initial = [];
+    try {
+      initial = JSON.parse(localStorage.getItem('unavailableSlots') || '[]');
+    } catch {
+      initial = [];
+    }
+    setUnavailableSlots(pruneExpiredUnavailableSlots(initial));
+  }, []);
+
+  // Sync on cross-tab changes
+  useEffect(() => {
+    const onStorage = (e) => {
+      if (e.key === 'unavailableSlots') {
+        try {
+          const incoming = JSON.parse(e.newValue || '[]');
+          setUnavailableSlots(pruneExpiredUnavailableSlots(incoming));
+        } catch {
+          // ignore
+        }
+      }
+    };
+    window.addEventListener('storage', onStorage);
+    return () => window.removeEventListener('storage', onStorage);
+  }, []);
   // Fetch appointments from API
   useEffect(() => {
     fetchAppointments();
@@ -314,6 +379,14 @@ function Dashboard() {
     const monthName = getMonthName(currentMonth);
     const slotDate = `${monthName} ${date}`;
     return bookedSlots.filter(slot => slot.date === slotDate && slot.time === time && isFutureOrPresentSlot(slot.date, slot.time));
+  };
+
+  const isSlotUnavailable = (date, time) => {
+    const monthName = getMonthName(currentMonth);
+    const slotDate = `${monthName} ${date}`;
+    return unavailableSlots.some(
+      s => s.date === slotDate && s.time === time && (s.stylist === 'All' || s.stylist === selectedEmployee)
+    );
   };
 
   return (
@@ -524,9 +597,9 @@ function Dashboard() {
                 <div className="time-slots">
                   {timeSlots.morning.map((time, index) => {
                     const bookings = getBookingsForSlot(selectedDate, time);
+                    const blockedByAdmin = isSlotUnavailable(selectedDate, time);
                     return (
                       <div key={index} className="time-slot-stack">
-                        {/* Render all bookings for this slot */}
                         {bookings.map((booking, bIdx) => (
                           <div
                             key={bIdx}
@@ -572,37 +645,55 @@ function Dashboard() {
                 <div className="time-slots">
                   {timeSlots.afternoon.map((time, index) => {
                     const bookings = getBookingsForSlot(selectedDate, time);
+                    const blockedByAdmin = isSlotUnavailable(selectedDate, time);
                     return (
                       <div key={index} className="time-slot-stack">
                         {bookings.map((booking, bIdx) => (
-  <div
-    key={bIdx}
-    className="time-slot booked"
-    title={`Booked\nTime: ${time}`}
-    style={{ 
-      background: '#ffe5e5', 
-      borderLeft: '4px solid #d17b7b', 
-      marginBottom: '4px', 
-      padding: '0.7rem 0.8rem', 
-      minHeight: '48px', 
-      display: 'flex', 
-      flexDirection: 'column', 
-      justifyContent: 'center',
-      alignItems: 'center',
-      cursor: 'not-allowed'
-    }}
-  >
-    <div style={{ 
-      fontWeight: 700, 
-      fontSize: '1rem', 
-      color: '#222' 
-    }}>
-      Booked
-    </div>
-  </div>
-))}
-
-                        {bookings.length === 0 && (
+                          <div
+                            key={bIdx}
+                            className="time-slot booked"
+                            title={`Booked\nTime: ${time}`}
+                            style={{ 
+                              background: '#ffe5e5', 
+                              borderLeft: '4px solid #d17b7b', 
+                              marginBottom: '4px', 
+                              padding: '0.7rem 0.8rem', 
+                              minHeight: '48px', 
+                              display: 'flex', 
+                              flexDirection: 'column', 
+                              justifyContent: 'center',
+                              alignItems: 'center',
+                              cursor: 'not-allowed'
+                            }}
+                          >
+                            <div style={{ fontWeight: 700, fontSize: '1rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                              {booking.userName?.length > 14 ? booking.userName.slice(0, 14) + '...' : booking.userName}
+                            </div>
+                            <div style={{ fontSize: '0.98rem', color: '#222', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                              {booking.serviceType?.length > 18 ? booking.serviceType.slice(0, 18) + '...' : booking.serviceType || ''}
+                            </div>
+                          </div>
+                        ))}
+                        {bookings.length === 0 && blockedByAdmin && (
+                          <div
+                            className="time-slot booked"
+                            title={`Unavailable (Admin)\nTime: ${time}`}
+                            style={{ 
+                              background: '#fff3cd',
+                              borderLeft: '4px solid #ffc107',
+                              marginBottom: '4px',
+                              padding: '0.7rem 0.8rem',
+                              minHeight: '48px',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              cursor: 'not-allowed'
+                            }}
+                          >
+                            Unavailable
+                          </div>
+                        )}
+                        {bookings.length === 0 && !blockedByAdmin && (
                           <div
                             className={`time-slot ${selectedTime === time ? 'selected' : ''}`}
                             style={{ minHeight: '48px', display: 'flex', alignItems: 'center' }}
