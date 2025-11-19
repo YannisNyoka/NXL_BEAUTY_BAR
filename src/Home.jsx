@@ -109,7 +109,7 @@ function Home() {
             <span className="nail-il">IL</span>
           </div>
           <div className="artist-signature">
-            <span className="polished-by">polished by</span>
+            <span className="polished-by">Polished by</span>
             <span className="artist-name"><i>NXL BEAUTY BAR</i></span>
           </div>
         </div>
@@ -122,11 +122,11 @@ function Home() {
 
       {/* About Section */}
       <div className="about-section">
-        <h2 className="section-title">say hello to your nail artist</h2>
+        <h2 className="section-title">Say hello to your nail artist</h2>
         <div className="about-content">
           <p>
-            Welcome to NXL Beauty Bar creations! We are passionate about creating beautiful, 
-            long-lasting nails that makes you feel confident and beautiful. 
+            Welcome to NXL Beauty Bar! We are passionate about creating beautiful, 
+            long-lasting Nails and Lashes that makes you feel confident and beautiful. 
             With years of experience in the beauty industry, we specialize in 
             all kinds of manicures and Pedicures, and eyelashes. Every client receives 
             personalized attention and care to ensure the perfect result to your satisfaction.
@@ -136,7 +136,7 @@ function Home() {
 
       {/* Services Preview */}
       <div className="services-preview">
-        <h2 className="section-title">our services</h2>
+        <h2 className="section-title">Our Services</h2>
         <div className="services-grid">
           <div className="service-card">
             <div className="service-icon artist-image">
@@ -156,14 +156,14 @@ function Home() {
               <img src={eyelashesImage}/>
               </div>
             <h3>Eye Lashes</h3>
-            <p>Professional acrylic extensions</p>
+            <p>Professional  extensions</p>
           </div>
         </div>
       </div>
 
       {/* Navigation */}
       <div className="navigation-section">
-        <h2 className="section-title">ready to book?</h2>
+        <h2 className="section-title">Ready to book?</h2>
         <div className="navigation-links">
           <Link to="/signup" className="nav-link primary">Create Account</Link>
           <Link to="/login" className="nav-link secondary">Sign In</Link>
@@ -187,7 +187,7 @@ function Home() {
           <span className="contact-icon">📸
 </span>
           <span><a href="https://www.instagram.com/nxlbeauty?igsh=Z2tnOTl0OXdmdmxz" target="_blank" rel="noopener noreferrer">
-  instagram
+  Instagram
 </a>
 </span>
         </div>
