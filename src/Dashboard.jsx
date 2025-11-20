@@ -109,8 +109,8 @@ function Dashboard() {
   };
 
   const employees = [
-    { name: 'Noxolo', email: 'nxlbeautybar@gmail.com', position: 'Stylist' },
-    { name: 'Thandi', email: 'thandi@nxlbeautybar.com', position: 'Stylist' }
+    { name: 'Noxolo', email: 'nxlbeautybar@gmail.com', position: '' },
+    { name: 'Thandi', email: 'thandi@nxlbeautybar.com', position: '' }
   ];
 
   // Change bookedSlots to state and include userName - now fetched from API
@@ -135,16 +135,15 @@ function Dashboard() {
 
   const parseSlotDateTime = (slot) => {
     try {
-      const [month, year, day] = (slot?.date || '').split(' ');
+      const dateStr = String(slot?.date || '').trim();
+      const parts = dateStr.split(' '); // e.g., ['November', '2025', '21']
+      if (parts.length < 3) return new Date(0);
+      const [month, year, day] = parts;
       const base = new Date(`${month} ${day}, ${year}`);
-      if (!isFinite(base)) return new Date(0);
+      if (isNaN(base.getTime())) return new Date(0);
 
-      if (slot?.time) {
-        const [hh, mm] = slot.time.split(':').map(Number);
-        base.setHours(hh || 0, mm || 0, 0, 0);
-      } else {
-        base.setHours(23, 59, 59, 999);
-      }
+      // Expire at end-of-day so marked slots remain unavailable for the whole day
+      base.setHours(23, 59, 59, 999);
       return base;
     } catch {
       return new Date(0);
@@ -251,7 +250,9 @@ function Dashboard() {
     const firstDay = new Date(year, month, 1);
     const lastDay = new Date(year, month + 1, 0);
     const daysInMonth = lastDay.getDate();
-    const startingDay = firstDay.getDay();
+    // Adjust to Monday-first calendar: convert JS Sunday=0..Saturday=6
+    // to Monday=0..Sunday=6
+    const startingDay = (firstDay.getDay() + 6) % 7;
     
     const days = [];
     for (let i = 0; i < startingDay; i++) {
@@ -625,8 +626,26 @@ function Dashboard() {
                             </div>
                           </div>
                         ))}
-                        {/* If not booked, show slot as available */}
-                        {bookings.length === 0 && (
+                        {bookings.length === 0 && blockedByAdmin && (
+                          <div
+                            className="time-slot booked"
+                            title={`Unavailable (Admin)\nTime: ${time}`}
+                            style={{ 
+                              background: '#fff3cd',
+                              borderLeft: '4px solid #ffc107',
+                              marginBottom: '4px',
+                              padding: '0.7rem 0.8rem',
+                              minHeight: '48px',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              cursor: 'not-allowed'
+                            }}
+                          >
+                            Unavailable
+                          </div>
+                        )}
+                        {bookings.length === 0 && !blockedByAdmin && (
                           <div
                             className={`time-slot ${selectedTime === time ? 'selected' : ''}`}
                             style={{ minHeight: '48px', display: 'flex', alignItems: 'center' }}

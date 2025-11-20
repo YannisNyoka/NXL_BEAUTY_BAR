@@ -160,7 +160,7 @@ body {
   font-size: 2rem;
   font-weight: 600;
   margin-bottom: 2rem;
-  text-transform: lowercase;
+  /*text-transform: lowercase;*/
   letter-spacing: 1px;
 }
 
@@ -734,6 +734,17 @@ body {
   text-align: center;
   position: relative;
   left:110%
+}
+.create-container {
+  max-width: 500px;
+  margin: 2rem ;
+  padding: 3rem;
+  background-color: white;
+  border-radius: 20px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  text-align: center;
+  position: relative;
+  left:85%
 }
 
 .signup-header {

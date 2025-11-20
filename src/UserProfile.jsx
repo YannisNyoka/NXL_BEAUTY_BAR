@@ -116,7 +116,9 @@ function UserProfile() {
     <div className="profile-container" style={{ 
       minHeight: '100vh', 
       background: '#f8f9fa', 
-      padding: '2rem' 
+      padding: '2rem', 
+      position: 'relative',
+      left: '20%'
     }}>
       {/* Header */}
       <div className="profile-header" style={{

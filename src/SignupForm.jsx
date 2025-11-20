@@ -79,7 +79,7 @@ function SignupForm() {
   };
 
   return (
-    <div className="signup-container">
+    <div className="create-container">
       <div className="signup-header">
         <h1>Join NXL Beauty Bar</h1>
         <p className="signup-subtitle">Create your account to start booking your nail appointments</p>

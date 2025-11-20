@@ -64,7 +64,7 @@ function AdminDashboard() {
   // Admin availability selection panels state
   const [adminCurrentMonth, setAdminCurrentMonth] = useState(new Date());
   const [adminSelectedDate, setAdminSelectedDate] = useState(null);
-  const [adminSelectedTime, setAdminSelectedTime] = useState('');
+  const [adminSelectedTimes, setAdminSelectedTimes] = useState([]);
   const timeSlots = {
     morning: ['09:00 am', '10:30 am'],
     afternoon: ['12:00 pm', '01:30 pm', '03:00 pm', '04:30 pm']
@@ -104,13 +104,8 @@ function AdminDashboard() {
       const base = new Date(`${month} ${day}, ${year}`);
       if (isNaN(base.getTime())) return new Date(0);
 
-      if (slot?.time) {
-        const { hours, minutes } = parseTimeString(slot.time);
-        base.setHours(hours, minutes, 0, 0);
-      } else {
-        // If no time, expire only after the day ends
-        base.setHours(23, 59, 59, 999);
-      }
+      // Expire after the day ends, regardless of slot time
+      base.setHours(23, 59, 59, 999);
       return base;
     } catch {
       return new Date(0);
@@ -130,8 +125,11 @@ function AdminDashboard() {
     const month = date.getMonth();
     const firstDay = new Date(year, month, 1);
     const lastDay = new Date(year, month + 1, 0);
+
+    // Align calendar to Monday-first. Convert JS Sunday=0..Saturday=6 to Monday=0..Sunday=6
+    const startingDay = (firstDay.getDay() + 6) % 7;
     const days = [];
-    for (let i = 0; i < firstDay.getDay(); i++) days.push(null);
+    for (let i = 0; i < startingDay; i++) days.push(null);
     for (let d = 1; d <= lastDay.getDate(); d++) days.push(d);
     return days;
   };
@@ -151,8 +149,10 @@ function AdminDashboard() {
   };
 
   const adminHandleTimeSelect = (time) => {
-    setAdminSelectedTime(time);
-    setUnavailableForm(prev => ({ ...prev, time }));
+    setAdminSelectedTimes(prev => {
+      const exists = prev.includes(time);
+      return exists ? prev.filter(t => t !== time) : [...prev, time];
+    });
   };
   
   useEffect(() => {
@@ -362,23 +362,23 @@ function AdminDashboard() {
   
   const handleUnavailableSave = () => {
     const dateStr = adminSelectedDate ? `${adminGetMonthName(adminCurrentMonth)} ${adminSelectedDate}` : unavailableForm.date;
-    const timeStr = adminSelectedTime || unavailableForm.time;
+    const selectedTimes = adminSelectedTimes.length ? adminSelectedTimes : (unavailableForm.time ? [unavailableForm.time] : []);
 
-    if (!dateStr || !timeStr) {
-      alert('Please select a date and time first.');
+    if (!dateStr || selectedTimes.length === 0) {
+      alert('Please select a date and at least one time slot.');
       return;
     }
 
-    const newSlot = {
-      id: Date.now(),
+    const newSlots = selectedTimes.map(timeStr => ({
+      id: Date.now() + Math.floor(Math.random() * 100000),
       date: dateStr,
       time: timeStr,
       reason: unavailableForm.reason,
       stylist: unavailableForm.stylist || 'All',
       status: unavailableForm.status || 'unavailable'
-    };
+    }));
 
-    const updated = pruneExpiredUnavailableSlots([...unavailableSlots, newSlot]);
+    const updated = pruneExpiredUnavailableSlots([...unavailableSlots, ...newSlots]);
     setUnavailableSlots(updated);
     // Immediate persistence to prevent loss on refresh
     localStorage.setItem('unavailableSlots', JSON.stringify(updated));
@@ -386,7 +386,7 @@ function AdminDashboard() {
     // Clear inline selection
     setUnavailableForm({ date: '', time: '', reason: '', stylist: 'All', status: 'unavailable' });
     setAdminSelectedDate(null);
-    setAdminSelectedTime('');
+    setAdminSelectedTimes([]);
   };
   
   const handleUnavailableDelete = (id) => {
@@ -668,7 +668,7 @@ function AdminDashboard() {
   const renderAvailability = () => (
     <div className="admin-content">
       <div style={styles.sectionHeader}>
-        <h2 className="admin-title">Availability Management</h2>
+        <h2 className="admin-title"></h2>
       </div>
 
       {/* Panels Row: Date + Time side by side */}
@@ -715,7 +715,7 @@ function AdminDashboard() {
                 {timeSlots.morning.map((time, i) => (
                   <div
                     key={i}
-                    className={`time-slot ${adminSelectedTime === time ? 'selected' : ''}`}
+                    className={`time-slot ${adminSelectedTimes.includes(time) ? 'selected' : ''}`}
                     onClick={() => adminHandleTimeSelect(time)}
                   >
                     {time}
@@ -729,7 +729,7 @@ function AdminDashboard() {
                 {timeSlots.afternoon.map((time, i) => (
                   <div
                     key={i}
-                    className={`time-slot ${adminSelectedTime === time ? 'selected' : ''}`}
+                    className={`time-slot ${adminSelectedTimes.includes(time) ? 'selected' : ''}`}
                     onClick={() => adminHandleTimeSelect(time)}
                   >
                     {time}
@@ -751,7 +751,7 @@ function AdminDashboard() {
           </div>
           <div>
             <div style={styles.settingLabel}>Time</div>
-            <div style={styles.settingValue}>{adminSelectedTime || '—'}</div>
+            <div style={styles.settingValue}>{adminSelectedTimes.length ? adminSelectedTimes.join(', ') : '—'}</div>
           </div>
           <div>
             <div style={styles.settingLabel}>Stylist</div>
@@ -761,8 +761,8 @@ function AdminDashboard() {
               style={{ ...styles.input, maxWidth: '240px' }}
             >
               <option>All</option>
-              <option>Nail Tech 1</option>
-              <option>Nail Tech 2</option>
+              <option>Noxolo</option>
+              <option>Thandi</option>
             </select>
           </div>
           <div>
@@ -1082,7 +1082,7 @@ const styles = {
     backgroundColor: '#ffffff',
     padding: '2rem',
     borderRadius: '10px',
-    boxShadow: '0 2px 5px rgba(0,0,0,0.1)'
+    boxShadow: '0 2px 5px rgba(0,0,0,0.1)',
   },
   adminTitle: {
     fontSize: '1.8rem',

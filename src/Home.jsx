@@ -76,7 +76,7 @@ function Home() {
     <div className="home-container">
       {/* Hero Section */}
       <div className="hero-section">
-        <h1 className="hero-title">WELCOME TO NXL BEAUTY BAR CREATIONS</h1>
+        <h1 className="hero-title">WELCOME TO NXL BEAUTY BAR </h1>
         
         {/* Connection Status Indicator */}
         <div style={{
