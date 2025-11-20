@@ -250,22 +250,37 @@ function AdminDashboard() {
       setLoadingAppointments(true);
       const result = await api.getAppointments();
       if (result.success) {
-        // Format appointments from API
-        const formattedAppointments = result.data.map(appt => ({
-          id: appt._id,
-          date: appt.date,
-          time: appt.time,
-          clientName: appt.userName || appt.clientName || 'Unknown',
-          services: appt.serviceIds || ['Service'],
-          status: 'confirmed',
-          totalPrice: appt.totalPrice || 0
-        }));
+        // Exclude cancelled appointments based on localStorage and format
+        let cancelled = [];
+        try {
+          cancelled = JSON.parse(localStorage.getItem('cancelledAppointments') || '[]').map(String);
+        } catch {
+          cancelled = [];
+        }
+
+        const formattedAppointments = result.data
+          .filter(appt => !cancelled.includes(String(appt._id)))
+          .map(appt => ({
+            id: appt._id,
+            date: appt.date,
+            time: appt.time,
+            clientName: appt.userName || appt.clientName || 'Unknown',
+            services: appt.serviceIds || ['Service'],
+            status: 'confirmed',
+            totalPrice: appt.totalPrice || 0
+          }));
         setAppointments(formattedAppointments);
       } else {
         // Use mock data if API fails
-        setAppointments([
+        let cancelled = [];
+        try {
+          cancelled = JSON.parse(localStorage.getItem('cancelledAppointments') || '[]').map(String);
+        } catch {
+          cancelled = [];
+        }
+        const mock = [
           {
-            id: 1,
+            id: '1',
             date: 'October 2025 7',
             time: '09:00 am',
             clientName: 'Jane Doe',
@@ -274,7 +289,7 @@ function AdminDashboard() {
             totalPrice: 270
           },
           {
-            id: 2,
+            id: '2',
             date: 'October 2025 8',
             time: '12:00 pm',
             clientName: 'John Smith',
@@ -283,7 +298,7 @@ function AdminDashboard() {
             totalPrice: 100
           },
           {
-            id: 3,
+            id: '3',
             date: 'October 2025 9',
             time: '03:00 pm',
             clientName: 'Mary Johnson',
@@ -291,7 +306,8 @@ function AdminDashboard() {
             status: 'confirmed',
             totalPrice: 80
           }
-        ]);
+        ].filter(apt => !cancelled.includes(String(apt.id)));
+        setAppointments(mock);
       }
     } catch (error) {
       console.error('Error fetching appointments:', error);
@@ -400,10 +416,18 @@ function AdminDashboard() {
   
   const handleAppointmentStatusChange = async (appointmentId, newStatus) => {
     if (newStatus === 'cancelled') {
-      const cancelled = JSON.parse(localStorage.getItem('cancelledAppointments') || '[]');
-      cancelled.push(appointmentId);
-      localStorage.setItem('cancelledAppointments', JSON.stringify(cancelled));
-      setAppointments(appointments.filter(apt => apt.id !== appointmentId));
+      let cancelled = [];
+      try {
+        cancelled = JSON.parse(localStorage.getItem('cancelledAppointments') || '[]');
+      } catch {
+        cancelled = [];
+      }
+      const idStr = String(appointmentId);
+      if (!cancelled.map(String).includes(idStr)) {
+        cancelled.push(idStr);
+        localStorage.setItem('cancelledAppointments', JSON.stringify(cancelled));
+      }
+      setAppointments(appointments.filter(apt => String(apt.id) !== idStr));
     } else {
       setAppointments(appointments.map(apt => 
         apt.id === appointmentId ? { ...apt, status: newStatus } : apt
@@ -420,7 +444,7 @@ function AdminDashboard() {
   
   const renderDashboard = () => (
     <div className="admin-content">
-      <h2 className="admin-title">Dashboard Overview</h2>
+      <h2 className="admin-title"></h2>
       
       <div style={styles.statsGrid}>
         <div style={styles.statCard}>
@@ -491,7 +515,7 @@ function AdminDashboard() {
   const renderAppointments = () => (
     <div className="admin-content">
       <div style={styles.sectionHeader}>
-        <h2 className="admin-title">Appointments Management</h2>
+        <h2 className="admin-title"></h2>
         <button onClick={fetchAppointments} style={styles.refreshBtn}>
           🔄 Refresh
         </button>
@@ -558,7 +582,7 @@ function AdminDashboard() {
   const renderServices = () => (
     <div className="admin-content">
       <div style={styles.sectionHeader}>
-        <h2 className="admin-title">Services Management</h2>
+        <h2 className="admin-title"></h2>
         <button 
           onClick={() => { setShowServiceForm(true); setEditingService(null); setServiceForm({ name: '', duration: '', price: '' }); }} 
           style={styles.addBtn}
