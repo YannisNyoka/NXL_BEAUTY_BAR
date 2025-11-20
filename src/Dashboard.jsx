@@ -605,7 +605,7 @@ function Dashboard() {
                           <div
                             key={bIdx}
                             className="time-slot booked"
-                            title={`Booked by: ${booking.userName}\nService: ${booking.serviceType}\nTime: ${time}`}
+                            title={`Booked\nTime: ${time}`}
                             style={{ 
                               background: '#ffe5e5', 
                               borderLeft: '4px solid #d17b7b', 
@@ -615,15 +615,11 @@ function Dashboard() {
                               display: 'flex', 
                               flexDirection: 'column', 
                               justifyContent: 'center',
+                              alignItems: 'center',
                               cursor: 'not-allowed'
                             }}
                           >
-                            <div style={{ fontWeight: 700, fontSize: '1rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                              {booking.userName?.length > 14 ? booking.userName.slice(0, 14) + '...' : booking.userName}
-                            </div>
-                            <div style={{ fontSize: '0.98rem', color: '#222', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                              {booking.serviceType?.length > 18 ? booking.serviceType.slice(0, 18) + '...' : booking.serviceType || ''}
-                            </div>
+                            <div style={{ fontWeight: 700, fontSize: '1rem' }}>Booked</div>
                           </div>
                         ))}
                         {bookings.length === 0 && blockedByAdmin && (
@@ -685,12 +681,7 @@ function Dashboard() {
                               cursor: 'not-allowed'
                             }}
                           >
-                            <div style={{ fontWeight: 700, fontSize: '1rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                              {booking.userName?.length > 14 ? booking.userName.slice(0, 14) + '...' : booking.userName}
-                            </div>
-                            <div style={{ fontSize: '0.98rem', color: '#222', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                              {booking.serviceType?.length > 18 ? booking.serviceType.slice(0, 18) + '...' : booking.serviceType || ''}
-                            </div>
+                            <div style={{ fontWeight: 700, fontSize: '1rem' }}>Booked</div>
                           </div>
                         ))}
                         {bookings.length === 0 && blockedByAdmin && (
