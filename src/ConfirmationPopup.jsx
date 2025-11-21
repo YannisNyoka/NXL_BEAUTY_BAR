@@ -7,6 +7,40 @@ import { useAuth } from './AuthContext';
 const ConfirmationPopup = ({ name = "NXL Beauty Bar", dateTime = '', onBookAnother, selectedManicureType = '', selectedPedicureType = '' }) => {
   const navigate = useNavigate();
   const { logout } = useAuth();
+  
+  // Build a Google Calendar link from dateTime
+  const buildCalendarLink = () => {
+    if (!dateTime) return '#';
+    // dateTime expected format: "October 2025 7, 09:00 am"
+    const parts = dateTime.split(', ');
+    if (parts.length !== 2) return '#';
+    const [datePart, timePart] = parts; // "October 2025 7" and "09:00 am"
+    const dateBits = datePart.split(' '); // [Month, Year, Day]
+    if (dateBits.length !== 3) return '#';
+    const [monthName, year, day] = dateBits;
+    const startStr = `${monthName} ${day}, ${year} ${timePart}`; // "October 7, 2025 09:00 am"
+    const startDate = new Date(startStr);
+    // Default event length: 60 minutes
+    const endDate = new Date(startDate.getTime() + 60 * 60 * 1000);
+
+    const pad = (n) => String(n).padStart(2, '0');
+    const toGoogleDate = (d) => (
+      `${d.getUTCFullYear()}${pad(d.getUTCMonth() + 1)}${pad(d.getUTCDate())}` +
+      `T${pad(d.getUTCHours())}${pad(d.getUTCMinutes())}00Z`
+    );
+
+    const dates = `${toGoogleDate(startDate)}/${toGoogleDate(endDate)}`;
+    const text = encodeURIComponent(`${name} Appointment`);
+    const details = encodeURIComponent([
+      'Your appointment is confirmed.',
+      selectedManicureType ? `Manicure: ${selectedManicureType}` : '',
+      selectedPedicureType ? `Pedicure: ${selectedPedicureType}` : ''
+    ].filter(Boolean).join('\n'));
+    const location = encodeURIComponent('Consultations • Africa/Johannesburg');
+    const ctz = 'Africa/Johannesburg';
+
+    return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${text}&dates=${dates}&details=${details}&location=${location}&ctz=${ctz}`;
+  };
   return (
     <div className="confirmation-popup-modal">
       <div className="confirmation-popup-content">
@@ -41,7 +75,7 @@ const ConfirmationPopup = ({ name = "NXL Beauty Bar", dateTime = '', onBookAnoth
               {selectedPedicureType && (
                 <div style={{margin:'0.7rem 0', fontWeight:600, color:'#d17b7b'}}>Pedicure Type: {selectedPedicureType}</div>
               )}
-              <a href="#" className="add-calendar-link" style={{color:'#1976d2', textDecoration:'underline', fontWeight:500, fontSize:'1rem'}}>+ Add to Calendar</a>
+              <a href={buildCalendarLink()} target="_blank" rel="noopener noreferrer" className="add-calendar-link" style={{color:'#1976d2', textDecoration:'underline', fontWeight:500, fontSize:'1rem'}}>+ Add to Calendar</a>
               <input style={{marginLeft:'0.7rem', border:'1px solid #bbb', borderRadius:'4px', padding:'0.2rem 0.5rem', fontSize:'1rem', width:'120px'}} placeholder="" />
             </div>
           </div>
