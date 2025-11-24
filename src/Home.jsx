@@ -33,6 +33,8 @@ function getUserLocationAndRedirect() {
 
 function Home() {
   const [connectionStatus, setConnectionStatus] = useState('Testing...');
+  const [flipped, setFlipped] = useState({ manicure: false, pedicure: false, lashes: false });
+  const flip = (key) => setFlipped(prev => ({ ...prev, [key]: !prev[key] }));
   
   useEffect(() => {
     // Test backend connection and fetch data
@@ -137,26 +139,84 @@ function Home() {
       {/* Services Preview */}
       <div className="services-preview">
         <h2 className="section-title">Our Services</h2>
-        <div className="services-grid">
-          <div className="service-card">
-            <div className="service-icon artist-image">
-              <img src= {manicureImage}/>
-            </div>
-            <h3> Manicure</h3>
-            <p>Long-lasting, chip-resistant polish</p>
-          </div>
-          <div className="service-card">
-            <div className="service-icon artist-image">
-              <img src={pedicureImage}/></div>
-            <h3>Pedicure</h3>
-            <p>Custom designs and patterns</p>
-          </div>
-          <div className="service-card">
-            <div className="service-icon artist-image">
-              <img src={eyelashesImage}/>
+        <div className="services-grid" style={{display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(260px, 1fr))', gap:'24px'}}>
+          {/* Manicure card */}
+          <div className="service-card" style={{cursor:'pointer', perspective:'1000px'}} onClick={() => flip('manicure')}>
+            <div style={{position:'relative', height:'320px', transition:'transform 0.6s', transformStyle:'preserve-3d', transform: flipped.manicure ? 'rotateY(180deg)' : 'none'}}>
+              {/* Front */}
+              <div style={{position:'absolute', inset:0, backfaceVisibility:'hidden', background:'#fff', borderRadius:'16px', boxShadow:'0 8px 20px rgba(0,0,0,0.08)', padding:'20px', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'space-between'}}>
+                <div className="service-icon artist-image" style={{width:'180px', height:'180px', borderRadius:'50%', overflow:'hidden', boxShadow:'0 2px 8px rgba(0,0,0,0.08)'}}>
+                  <img src={manicureImage} alt="Manicure" style={{width:'100%', height:'100%', objectFit:'cover'}}/>
+                </div>
+                <div style={{textAlign:'center'}}>
+                  <h3>Manicure</h3>
+                  <p>Long-lasting, chip-resistant polish</p>
+                </div>
               </div>
-            <h3>Eye Lashes</h3>
-            <p>Professional  extensions</p>
+              {/* Back */}
+              <div style={{position:'absolute', inset:0, backfaceVisibility:'hidden', transform:'rotateY(180deg)', background:'#fff', borderRadius:'16px', boxShadow:'0 8px 20px rgba(0,0,0,0.08)', padding:'22px', display:'flex', flexDirection:'column', justifyContent:'center', alignItems:'center'}}>
+                <h3 style={{marginBottom:'8px'}}>Manicure </h3>
+                <ul style={{listStyle:'none', padding:0, margin:0, textAlign:'center'}}>
+                  <li>Rubberbase</li>
+                  <li>Acrylic</li>
+                  <li>Polygel</li>
+                </ul>
+                <small style={{marginTop:'12px', color:'#777'}}></small>
+              </div>
+            </div>
+          </div>
+
+          {/* Pedicure card */}
+          <div className="service-card" style={{cursor:'pointer', perspective:'1000px'}} onClick={() => flip('pedicure')}>
+            <div style={{position:'relative', height:'320px', transition:'transform 0.6s', transformStyle:'preserve-3d', transform: flipped.pedicure ? 'rotateY(180deg)' : 'none'}}>
+              {/* Front */}
+              <div style={{position:'absolute', inset:0, backfaceVisibility:'hidden', background:'#fff', borderRadius:'16px', boxShadow:'0 8px 20px rgba(0,0,0,0.08)', padding:'20px', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'space-between'}}>
+                <div className="service-icon artist-image" style={{width:'180px', height:'180px', borderRadius:'50%', overflow:'hidden', boxShadow:'0 2px 8px rgba(0,0,0,0.08)'}}>
+                  <img src={pedicureImage} alt="Pedicure" style={{width:'100%', height:'100%', objectFit:'cover'}}/>
+                </div>
+                <div style={{textAlign:'center'}}>
+                  <h3>Pedicure</h3>
+                  <p>Custom designs and patterns</p>
+                </div>
+              </div>
+              {/* Back */}
+              <div style={{position:'absolute', inset:0, backfaceVisibility:'hidden', transform:'rotateY(180deg)', background:'#fff', borderRadius:'16px', boxShadow:'0 8px 20px rgba(0,0,0,0.08)', padding:'22px', display:'flex', flexDirection:'column', justifyContent:'center', alignItems:'center'}}>
+                <h3 style={{marginBottom:'8px'}}>Pedicure </h3>
+                <ul style={{listStyle:'none', padding:0, margin:0, textAlign:'center'}}>
+                  <li>Classic Pedicure</li>
+                  <li>Basic Pedicure</li>
+                  <li>Acrilic Pedi</li>
+                  <li>French Pedi</li>
+                </ul>
+                <small style={{marginTop:'12px', color:'#777'}}></small>
+              </div>
+            </div>
+          </div>
+
+          {/* Lashes card */}
+          <div className="service-card" style={{cursor:'pointer', perspective:'1000px'}} onClick={() => flip('lashes')}>
+            <div style={{position:'relative', height:'320px', transition:'transform 0.6s', transformStyle:'preserve-3d', transform: flipped.lashes ? 'rotateY(180deg)' : 'none'}}>
+              {/* Front */}
+              <div style={{position:'absolute', inset:0, backfaceVisibility:'hidden', background:'#fff', borderRadius:'16px', boxShadow:'0 8px 20px rgba(0,0,0,0.08)', padding:'20px', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'space-between'}}>
+                <div className="service-icon artist-image" style={{width:'180px', height:'180px', borderRadius:'50%', overflow:'hidden', boxShadow:'0 2px 8px rgba(0,0,0,0.08)'}}>
+                  <img src={eyelashesImage} alt="Eye Lashes" style={{width:'100%', height:'100%', objectFit:'cover'}}/>
+                </div>
+                <div style={{textAlign:'center'}}>
+                  <h3>Eye Lashes</h3>
+                  <p>Professional extensions</p>
+                </div>
+              </div>
+              {/* Back */}
+              <div style={{position:'absolute', inset:0, backfaceVisibility:'hidden', transform:'rotateY(180deg)', background:'#fff', borderRadius:'16px', boxShadow:'0 8px 20px rgba(0,0,0,0.08)', padding:'22px', display:'flex', flexDirection:'column', justifyContent:'center', alignItems:'center'}}>
+                <h3 style={{marginBottom:'8px'}}>Eyelashes</h3>
+                <ul style={{listStyle:'none', padding:0, margin:0, textAlign:'center'}}>
+                  <li>Classic Set</li>
+                  <li>Volume Set</li>
+                  <li>Hybrid</li>
+                </ul>
+                <small style={{marginTop:'12px', color:'#777'}}></small>
+              </div>
+            </div>
           </div>
         </div>
       </div>
