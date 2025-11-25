@@ -235,24 +235,44 @@ function Home() {
       {/* Contact Info */}
       <div className="contact-info">
         <div className="contact-item">
-          <span className="contact-icon">📘
-
-</span>
+          <span className="contact-icon" aria-hidden="true" style={{display:'inline-flex'}}>
+            <svg width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <rect x="1" y="1" width="22" height="22" rx="5" fill="#1877F2"/>
+              <path d="M13.2 9.3h1.8V6.8h-1.8c-1.9 0-3.1 1.2-3.1 3.1v1.6H9.1v2.5h1.9v6h2.8v-6h2l.5-2.5h-2.5V9.9c0-.4.2-.6.9-.6z" fill="#ffffff"/>
+            </svg>
+          </span>
           <span><a href="https://www.facebook.com/share/17g73Pcr9j/" target="_blank" rel="noopener noreferrer">
   Facebook
 </a>
 </span>
         </div>
         <div className="contact-item">
-          <span className="contact-icon">📸
-</span>
+          <span className="contact-icon" aria-hidden="true" style={{display:'inline-flex'}}>
+            <svg width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <linearGradient id="igGrad" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0%" stopColor="#f58529"/>
+                  <stop offset="50%" stopColor="#dd2a7b"/>
+                  <stop offset="100%" stopColor="#8134af"/>
+                </linearGradient>
+              </defs>
+              <rect x="1" y="1" width="22" height="22" rx="5" fill="url(#igGrad)"/>
+              <rect x="7" y="7" width="10" height="10" rx="5" fill="none" stroke="#fff" strokeWidth="2"/>
+              <circle cx="16.5" cy="7.5" r="1.3" fill="#fff"/>
+            </svg>
+          </span>
           <span><a href="https://www.instagram.com/nxlbeauty?igsh=Z2tnOTl0OXdmdmxz" target="_blank" rel="noopener noreferrer">
   Instagram
 </a>
 </span>
         </div>
         <div className="contact-item">
-          <span className="contact-icon">📱</span>
+          <span className="contact-icon" aria-hidden="true" style={{display:'inline-flex'}}>
+            <svg width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <rect x="1" y="1" width="22" height="22" rx="5" fill="#000"/>
+              <path d="M9 7.5c1.7 0 3.2.9 4.1 2.3v6.7h-2v-4.2c-.6-.4-1.4-.6-2.1-.6-1.9 0-3.5 1.2-3.5 3.1 0 1.6 1.2 2.9 2.8 3.1-2.2-.2-4-2.1-4-4.4 0-2.5 2.1-4.4 4.7-4.4zM15 7.2c.7.3 1.3.8 1.8 1.4v6.9h-1.8V7.2z" fill="#fff"/>
+            </svg>
+          </span>
           <span ><a href="https://www.tiktok.com/@nxlbeautybar?_r=1&_t=ZS-91Q3zPzMphH" target="_blank" rel="noopener noreferrer">
    TikTok
 </a>
