@@ -15,22 +15,7 @@ function UserProfile() {
   const [rescheduleForm, setRescheduleForm] = useState({ date: '', time: '' });
   const [savingReschedule, setSavingReschedule] = useState(false);
 
-  // Local persistence for reschedule overrides (survive refresh)
-  const loadRescheduleOverrides = () => {
-    try {
-      return JSON.parse(localStorage.getItem('rescheduledAppointments') || '{}');
-    } catch {
-      return {};
-    }
-  };
-
-  const saveRescheduleOverride = (id, data) => {
-    try {
-      const current = loadRescheduleOverrides();
-      const updated = { ...current, [id]: { ...data, updatedAt: Date.now() } };
-      localStorage.setItem('rescheduledAppointments', JSON.stringify(updated));
-    } catch {}
-  };
+  // Removed local reschedule overrides; rely on backend state
 
   useEffect(() => {
     fetchUserAppointments();
@@ -41,17 +26,11 @@ function UserProfile() {
       setLoading(true);
       const result = await api.getAppointments();
       if (result.success) {
-        // Get cancelled appointments from localStorage
-        const cancelledAppointments = JSON.parse(localStorage.getItem('cancelledAppointments') || '[]');
-        
-        // Filter appointments for the current user and exclude cancelled ones
-        const userAppointments = result.data.filter(apt => 
+        const userAppointments = (Array.isArray(result.data) ? result.data : []).filter(apt => 
           (apt.userName === `${user?.firstName} ${user?.lastName}` || apt.userId === user?.id) &&
-          !cancelledAppointments.includes(apt._id)
+          apt.status !== 'Cancelled'
         );
-        const overrides = (() => { try { return JSON.parse(localStorage.getItem('rescheduledAppointments') || '{}'); } catch { return {}; } })();
-        const merged = userAppointments.map(a => (overrides[a._id] ? { ...a, ...overrides[a._id] } : a));
-        setAppointments(merged);
+        setAppointments(userAppointments);
       } else {
         setError('Failed to fetch appointments');
       }
@@ -65,23 +44,10 @@ function UserProfile() {
   const handleCancelAppointment = async (appointmentId) => {
     setCancellingId(appointmentId);
     try {
-      console.log(`Cancelling appointment ${appointmentId}`);
-      
-      // Store cancelled appointment ID in localStorage for persistence
-      const cancelledAppointments = JSON.parse(localStorage.getItem('cancelledAppointments') || '[]');
-      if (!cancelledAppointments.includes(appointmentId)) {
-        cancelledAppointments.push(appointmentId);
-        localStorage.setItem('cancelledAppointments', JSON.stringify(cancelledAppointments));
+      const result = await api.cancelAppointment(appointmentId);
+      if (!result.success) {
+        throw new Error(result.error || 'Cancel failed');
       }
-      
-      // Try the API delete call
-      try {
-        await api.cancelAppointment(appointmentId);
-        console.log('Backend deletion attempt completed');
-      } catch (apiError) {
-        console.log('Backend deletion failed (expected):', apiError.message);
-      }
-      
       // Remove from local state immediately for UI responsiveness
       setAppointments(prev => prev.filter(apt => apt._id !== appointmentId));
       
@@ -127,7 +93,7 @@ function UserProfile() {
     }
     setSavingReschedule(true);
     try {
-      const result = await api.updateAppointment(rescheduleId, {
+      const result = await api.rescheduleAppointment(rescheduleId, {
         date: rescheduleForm.date,
         time: rescheduleForm.time,
       });
@@ -138,8 +104,6 @@ function UserProfile() {
             ? { ...a, date: updated.date || rescheduleForm.date, time: updated.time || rescheduleForm.time }
             : a
         )));
-        // Persist override locally to survive refresh regardless of backend behavior
-        saveRescheduleOverride(rescheduleId, { date: rescheduleForm.date, time: rescheduleForm.time });
         setShowReschedule(false);
         setRescheduleId(null);
         setRescheduleForm({ date: '', time: '' });
@@ -147,28 +111,10 @@ function UserProfile() {
         // Notify other views that appointment changed
         try { triggerAppointmentRefresh(); } catch {}
       } else {
-        // Fallback: update locally if API fails but inputs valid
-        setAppointments(prev => prev.map(a => (
-          a._id === rescheduleId
-            ? { ...a, date: rescheduleForm.date, time: rescheduleForm.time }
-            : a
-        )));
-        saveRescheduleOverride(rescheduleId, { date: rescheduleForm.date, time: rescheduleForm.time });
-        setShowReschedule(false);
-        setRescheduleId(null);
-        setRescheduleForm({ date: '', time: '' });
+        throw new Error(result.error || 'Reschedule failed');
       }
     } catch (e) {
-      // Final fallback: local update
-      setAppointments(prev => prev.map(a => (
-        a._id === rescheduleId
-          ? { ...a, date: rescheduleForm.date, time: rescheduleForm.time }
-          : a
-      )));
-      saveRescheduleOverride(rescheduleId, { date: rescheduleForm.date, time: rescheduleForm.time });
-      setShowReschedule(false);
-      setRescheduleId(null);
-      setRescheduleForm({ date: '', time: '' });
+      setError(e.message || 'Failed to reschedule appointment');
     } finally {
       setSavingReschedule(false);
     }

@@ -19,40 +19,28 @@ function AdminDashboard() {
   const [appointments, setAppointments] = useState([]);
   const [loadingAppointments, setLoadingAppointments] = useState(true);
   
-  // Services state
-  const [services, setServices] = useState([
-    { id: 1, name: 'Manicure', duration: 45, price: 150 },
-    { id: 2, name: 'Pedicure', duration: 20, price: 100 },
-    { id: 3, name: 'Lashes', duration: 30, price: 120 },
-    { id: 4, name: 'Tinting', duration: 20, price: 80 }
-  ]);
+  // Services state (from backend)
+  const [services, setServices] = useState([]);
   const [editingService, setEditingService] = useState(null);
   const [showServiceForm, setShowServiceForm] = useState(false);
   const [serviceForm, setServiceForm] = useState({ name: '', duration: '', price: '' });
   
-  // Persist services to localStorage and hydrate on load
-  const servicesInitializedRef = useRef(false);
-  
+  // Load services from backend
   useEffect(() => {
-    const saved = localStorage.getItem('services');
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed)) {
-          setServices(parsed);
-        }
-      } catch (e) {
-        // ignore JSON errors
+    const loadServices = async () => {
+      const result = await api.getServices();
+      if (result.success) {
+        const normalized = (Array.isArray(result.data) ? result.data : []).map(s => ({
+          id: s._id || s.id,
+          name: s.name,
+          duration: s.durationMinutes ?? s.duration,
+          price: s.price,
+        }));
+        setServices(normalized);
       }
-    }
-    servicesInitializedRef.current = true;
+    };
+    loadServices();
   }, []);
-  
-  useEffect(() => {
-    if (servicesInitializedRef.current) {
-      localStorage.setItem('services', JSON.stringify(services));
-    }
-  }, [services]);
   
   // Unavailable dates/time slots state
   const [unavailableSlots, setUnavailableSlots] = useState([]);
@@ -156,26 +144,23 @@ function AdminDashboard() {
   };
   
   useEffect(() => {
-    try {
-      const savedUnavailability = localStorage.getItem('unavailableSlots');
-      let parsed = [];
-      if (savedUnavailability) {
-        parsed = JSON.parse(savedUnavailability);
+    const loadAvailability = async () => {
+      const result = await api.getAvailability();
+      if (result.success) {
+        const normalized = (Array.isArray(result.data) ? result.data : []).map(s => ({
+          id: s._id || s.id,
+          date: s.date,
+          time: s.time,
+          reason: s.reason || '',
+          stylist: s.employeeId || 'All',
+          status: 'unavailable',
+        }));
+        setUnavailableSlots(pruneExpiredUnavailableSlots(normalized));
       }
-      const pruned = pruneExpiredUnavailableSlots(parsed);
-      setUnavailableSlots(pruned);
-      if (Array.isArray(parsed) && pruned.length !== parsed.length) {
-        localStorage.setItem('unavailableSlots', JSON.stringify(pruned));
-      }
-    } catch {}
+    };
+    loadAvailability();
     unavailabilityInitializedRef.current = true;
   }, []);
-  
-  useEffect(() => {
-    if (unavailabilityInitializedRef.current) {
-      localStorage.setItem('unavailableSlots', JSON.stringify(unavailableSlots));
-    }
-  }, [unavailableSlots]);
 
   // Periodically prune expired slots
   useEffect(() => {
@@ -340,25 +325,29 @@ function AdminDashboard() {
     });
   };
   
-  const handleServiceAdd = (e) => {
+  const handleServiceAdd = async (e) => {
     e.preventDefault();
     if (editingService) {
-      // Edit existing service
-      setServices(services.map(s => 
-        s.id === editingService.id 
-          ? { ...s, name: serviceForm.name, duration: parseInt(serviceForm.duration), price: parseInt(serviceForm.price) }
-          : s
-      ));
+      const durationVal = parseInt(serviceForm.duration);
+      const update = { name: serviceForm.name, durationMinutes: durationVal, duration: durationVal, price: parseInt(serviceForm.price) };
+      const result = await api.updateService(editingService.id, update);
+      if (result.success) {
+        setServices(services.map(s => 
+          s.id === editingService.id 
+            ? { ...s, name: update.name, duration: update.durationMinutes ?? update.duration, price: update.price }
+            : s
+        ));
+      }
       setEditingService(null);
     } else {
-      // Add new service
-      const newService = {
-        id: Date.now(),
-        name: serviceForm.name,
-        duration: parseInt(serviceForm.duration),
-        price: parseInt(serviceForm.price)
-      };
-      setServices([...services, newService]);
+      const durationVal = parseInt(serviceForm.duration);
+      const payload = { name: serviceForm.name, durationMinutes: durationVal, duration: durationVal, price: parseInt(serviceForm.price) };
+      const result = await api.createService(payload);
+      if (result.success) {
+        const s = result.data;
+        const newService = { id: s._id || s.id, name: s.name, duration: s.durationMinutes ?? s.duration, price: s.price };
+        setServices([...services, newService]);
+      }
     }
     setShowServiceForm(false);
     setServiceForm({ name: '', duration: '', price: '' });
@@ -370,13 +359,16 @@ function AdminDashboard() {
     setShowServiceForm(true);
   };
   
-  const handleServiceDelete = (id) => {
+  const handleServiceDelete = async (id) => {
     if (confirm('Are you sure you want to delete this service?')) {
-      setServices(services.filter(s => s.id !== id));
+      const result = await api.deleteService(id);
+      if (result.success) {
+        setServices(services.filter(s => s.id !== id));
+      }
     }
   };
   
-  const handleUnavailableSave = () => {
+  const handleUnavailableSave = async () => {
     const dateStr = adminSelectedDate ? `${adminGetMonthName(adminCurrentMonth)} ${adminSelectedDate}` : unavailableForm.date;
     const selectedTimes = adminSelectedTimes.length ? adminSelectedTimes : (unavailableForm.time ? [unavailableForm.time] : []);
 
@@ -385,19 +377,37 @@ function AdminDashboard() {
       return;
     }
 
-    const newSlots = selectedTimes.map(timeStr => ({
-      id: Date.now() + Math.floor(Math.random() * 100000),
-      date: dateStr,
-      time: timeStr,
-      reason: unavailableForm.reason,
-      stylist: unavailableForm.stylist || 'All',
-      status: unavailableForm.status || 'unavailable'
-    }));
+    // Convert to ISO date (YYYY-MM-DD) expected by backend
+    const toIsoDate = (label) => {
+      try {
+        if (adminSelectedDate) {
+          const d = new Date(adminCurrentMonth.getFullYear(), adminCurrentMonth.getMonth(), adminSelectedDate);
+          return d.toISOString().slice(0, 10);
+        }
+        const d = new Date(label);
+        if (!isNaN(d.getTime())) return d.toISOString().slice(0, 10);
+      } catch {}
+      return String(label); // fallback to original
+    };
+    const isoDate = toIsoDate(dateStr);
 
-    const updated = pruneExpiredUnavailableSlots([...unavailableSlots, ...newSlots]);
+    const created = [];
+    for (const timeStr of selectedTimes) {
+      const payload = {
+        date: isoDate,
+        time: timeStr,
+        employeeId: unavailableForm.stylist === 'All' ? undefined : unavailableForm.stylist,
+        stylistName: unavailableForm.stylist || 'All',
+        reason: unavailableForm.reason,
+      };
+      const result = await api.createAvailability(payload);
+      if (result.success && result.data) {
+        const s = result.data;
+        created.push({ id: s._id || s.id, date: s.date || dateStr, time: s.time, reason: s.reason || '', stylist: s.employeeId || payload.stylistName || 'All', status: 'unavailable' });
+      }
+    }
+    const updated = pruneExpiredUnavailableSlots([...unavailableSlots, ...created]);
     setUnavailableSlots(updated);
-    // Immediate persistence to prevent loss on refresh
-    localStorage.setItem('unavailableSlots', JSON.stringify(updated));
 
     // Clear inline selection
     setUnavailableForm({ date: '', time: '', reason: '', stylist: 'All', status: 'unavailable' });
@@ -405,29 +415,22 @@ function AdminDashboard() {
     setAdminSelectedTimes([]);
   };
   
-  const handleUnavailableDelete = (id) => {
+  const handleUnavailableDelete = async (id) => {
     if (confirm('Are you sure you want to remove this unavailable slot?')) {
-      const updated = unavailableSlots.filter(s => s.id !== id);
-      setUnavailableSlots(updated);
-      // Persist deletion immediately
-      localStorage.setItem('unavailableSlots', JSON.stringify(updated));
+      const result = await api.deleteAvailability(id);
+      if (result.success) {
+        const updated = unavailableSlots.filter(s => s.id !== id);
+        setUnavailableSlots(updated);
+      }
     }
   };
   
   const handleAppointmentStatusChange = async (appointmentId, newStatus) => {
     if (newStatus === 'cancelled') {
-      let cancelled = [];
-      try {
-        cancelled = JSON.parse(localStorage.getItem('cancelledAppointments') || '[]');
-      } catch {
-        cancelled = [];
+      const result = await api.cancelAppointment(appointmentId);
+      if (result.success) {
+        setAppointments(appointments.filter(apt => String(apt.id) !== String(appointmentId)));
       }
-      const idStr = String(appointmentId);
-      if (!cancelled.map(String).includes(idStr)) {
-        cancelled.push(idStr);
-        localStorage.setItem('cancelledAppointments', JSON.stringify(cancelled));
-      }
-      setAppointments(appointments.filter(apt => String(apt.id) !== idStr));
     } else {
       setAppointments(appointments.map(apt => 
         apt.id === appointmentId ? { ...apt, status: newStatus } : apt

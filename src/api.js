@@ -65,35 +65,242 @@ export const api = {
 
   getAppointments: () => apiCall('/api/appointments'),
 
-  // Appointment management (Note: Backend may not have DELETE endpoint)
-  cancelAppointment: async (appointmentId) => {
-    try {
-      // First try the DELETE endpoint
-      const result = await apiCall(`/api/appointments/${appointmentId}`, {
-        method: 'DELETE',
-      });
-      return result;
-    } catch (error) {
-      console.log('DELETE endpoint not available, using alternative method');
-      // If DELETE fails, we'll simulate by marking as cancelled
-      // Since we can't modify the database without proper endpoints,
-      // we'll return success and let the frontend handle the state
-      return { success: true, message: 'Appointment cancelled locally' };
-    }
-  },
-
-  updateAppointment: (appointmentId, updateData) => apiCall(`/api/appointments/${appointmentId}`, {
+  // Appointment management
+  cancelAppointment: (appointmentId, reason) => apiCall(`/api/appointments/${appointmentId}/cancel`, {
     method: 'PUT',
-    body: JSON.stringify(updateData),
+    body: JSON.stringify({ reason }),
+  }),
+
+  rescheduleAppointment: (appointmentId, { date, time }) => apiCall(`/api/appointments/${appointmentId}/reschedule`, {
+    method: 'PUT',
+    body: JSON.stringify({ date, time }),
   }),
 
   // Service operations
-  createService: (serviceData) => apiCall('/api/services', {
-    method: 'POST',
-    body: JSON.stringify(serviceData),
-  }),
+  createService: async (serviceData) => {
+    // Primary
+    let res = await apiCall('/api/services', {
+      method: 'POST',
+      body: JSON.stringify(serviceData),
+    });
+    if (res.success) return res;
+    // Fallbacks without /api prefix and admin namespace
+    res = await apiCall('/services', {
+      method: 'POST',
+      body: JSON.stringify(serviceData),
+    });
+    if (res.success) return res;
+    res = await apiCall('/api/admin/services', {
+      method: 'POST',
+      body: JSON.stringify(serviceData),
+    });
+    if (res.success) return res;
+    return apiCall('/admin/services', {
+      method: 'POST',
+      body: JSON.stringify(serviceData),
+    });
+  },
 
-  getServices: () => apiCall('/api/services'),
+  getServices: async () => {
+    let res = await apiCall('/api/services');
+    if (res.success) return res;
+    res = await apiCall('/services');
+    if (res.success) return res;
+    res = await apiCall('/api/admin/services');
+    if (res.success) return res;
+    return apiCall('/admin/services');
+  },
+
+  updateService: async (serviceId, updateData) => {
+    // Send both durationMinutes and duration for backend compatibility
+    const payload = {
+      ...updateData,
+      duration: updateData.durationMinutes ?? updateData.duration,
+      durationMinutes: updateData.durationMinutes ?? updateData.duration,
+    };
+    // Primary: RESTful path /api/services/:id
+    let res = await apiCall(`/api/services/${serviceId}`, {
+      method: 'PUT',
+      body: JSON.stringify(payload),
+    });
+    if (res.success) return res;
+    // Fallback A: PUT /api/services with { id, ...payload }
+    res = await apiCall('/api/services', {
+      method: 'PUT',
+      body: JSON.stringify({ id: serviceId, ...payload }),
+    });
+    if (res.success) return res;
+    // Fallback B: POST /api/services/:id/update
+    res = await apiCall(`/api/services/${serviceId}/update`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+    if (res.success) return res;
+    // Non-/api equivalents
+    res = await apiCall(`/services/${serviceId}`, {
+      method: 'PUT',
+      body: JSON.stringify(payload),
+    });
+    if (res.success) return res;
+    res = await apiCall('/services', {
+      method: 'PUT',
+      body: JSON.stringify({ id: serviceId, ...payload }),
+    });
+    if (res.success) return res;
+    res = await apiCall(`/services/${serviceId}/update`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+    if (res.success) return res;
+    // Admin namespace
+    res = await apiCall(`/api/admin/services/${serviceId}`, {
+      method: 'PUT',
+      body: JSON.stringify(payload),
+    });
+    if (res.success) return res;
+    res = await apiCall(`/admin/services/${serviceId}`, {
+      method: 'PUT',
+      body: JSON.stringify(payload),
+    });
+    return res;
+  },
+
+  deleteService: async (serviceId) => {
+    // Primary: DELETE /api/services/:id
+    let res = await apiCall(`/api/services/${serviceId}`, {
+      method: 'DELETE',
+    });
+    if (res.success) return res;
+    // Fallback A: DELETE /api/services with { id }
+    res = await apiCall('/api/services', {
+      method: 'DELETE',
+      body: JSON.stringify({ id: serviceId }),
+    });
+    if (res.success) return res;
+    // Fallback B: POST /api/services/:id/delete
+    res = await apiCall(`/api/services/${serviceId}/delete`, {
+      method: 'POST',
+      body: JSON.stringify({ id: serviceId }),
+    });
+    if (res.success) return res;
+    // Non-/api equivalents
+    res = await apiCall(`/services/${serviceId}`, {
+      method: 'DELETE',
+    });
+    if (res.success) return res;
+    res = await apiCall('/services', {
+      method: 'DELETE',
+      body: JSON.stringify({ id: serviceId }),
+    });
+    if (res.success) return res;
+    res = await apiCall(`/services/${serviceId}/delete`, {
+      method: 'POST',
+      body: JSON.stringify({ id: serviceId }),
+    });
+    if (res.success) return res;
+    // Admin namespace
+    res = await apiCall(`/api/admin/services/${serviceId}`, {
+      method: 'DELETE',
+    });
+    if (res.success) return res;
+    res = await apiCall(`/admin/services/${serviceId}`, {
+      method: 'DELETE',
+    });
+    return res;
+  },
+
+  // Availability operations
+  getAvailability: async (params = {}) => {
+    const query = new URLSearchParams(params).toString();
+    const endpoint = query ? `/api/availability?${query}` : '/api/availability';
+    let res = await apiCall(endpoint);
+    if (res.success) return res;
+    // Fallback: admin namespace
+    const fallback = query ? `/api/admin/availability?${query}` : '/api/admin/availability';
+    res = await apiCall(fallback);
+    if (res.success) return res;
+    // Fallback: alternate naming
+    const fallback2 = query ? `/api/unavailable?${query}` : '/api/unavailable';
+    res = await apiCall(fallback2);
+    if (res.success) return res;
+    // Non-/api equivalents
+    const fallback3 = query ? `/availability?${query}` : '/availability';
+    res = await apiCall(fallback3);
+    if (res.success) return res;
+    const fallback4 = query ? `/admin/availability?${query}` : '/admin/availability';
+    return apiCall(fallback4);
+  },
+
+  createAvailability: async (slotData) => {
+    // Try primary
+    let res = await apiCall('/api/availability', {
+      method: 'POST',
+      body: JSON.stringify(slotData),
+    });
+    if (res.success) return res;
+    // Fallback: admin namespace
+    res = await apiCall('/api/admin/availability', {
+      method: 'POST',
+      body: JSON.stringify(slotData),
+    });
+    if (res.success) return res;
+    // Fallback: alternate naming
+    res = await apiCall('/api/unavailable', {
+      method: 'POST',
+      body: JSON.stringify(slotData),
+    });
+    if (res.success) return res;
+    // Fallback: explicit create
+    res = await apiCall('/api/availability/create', {
+      method: 'POST',
+      body: JSON.stringify(slotData),
+    });
+    if (res.success) return res;
+    // Non-/api equivalents
+    res = await apiCall('/availability', {
+      method: 'POST',
+      body: JSON.stringify(slotData),
+    });
+    if (res.success) return res;
+    res = await apiCall('/admin/availability', {
+      method: 'POST',
+      body: JSON.stringify(slotData),
+    });
+    return res;
+  },
+
+  deleteAvailability: async (slotId) => {
+    // Try primary
+    let res = await apiCall(`/api/availability/${slotId}`, {
+      method: 'DELETE',
+    });
+    if (res.success) return res;
+    // Fallback: admin namespace
+    res = await apiCall(`/api/admin/availability/${slotId}`, {
+      method: 'DELETE',
+    });
+    if (res.success) return res;
+    // Fallback: alternate naming
+    res = await apiCall(`/api/unavailable/${slotId}`, {
+      method: 'DELETE',
+    });
+    if (res.success) return res;
+    // Fallback: explicit delete
+    res = await apiCall(`/api/availability/${slotId}/delete`, {
+      method: 'POST',
+      body: JSON.stringify({ id: slotId }),
+    });
+    if (res.success) return res;
+    // Non-/api equivalents
+    res = await apiCall(`/availability/${slotId}`, {
+      method: 'DELETE',
+    });
+    if (res.success) return res;
+    res = await apiCall(`/admin/availability/${slotId}`, {
+      method: 'DELETE',
+    });
+    return res;
+  },
 
   // Employee operations
   createEmployee: (employeeData) => apiCall('/api/employees', {
