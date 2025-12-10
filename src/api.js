@@ -80,10 +80,10 @@ export const api = {
  // For now, we use the DELETE route, which the backend supports.
  }),
 
-  rescheduleAppointment: (appointmentId, { date, time }) => apiCall(`api/appointments/${appointmentId}`, {
-    method: 'PUT',
-    body: JSON.stringify({ date, time }),
-  }),
+ rescheduleAppointment: (appointmentId, { date, time }) => apiCall(`api/appointments/${appointmentId}`, {
+ method: 'PUT',
+ body: JSON.stringify({ date, time }),
+ }),
 
   // Service operations
   createService: (serviceData) => apiCall('api/services', {
