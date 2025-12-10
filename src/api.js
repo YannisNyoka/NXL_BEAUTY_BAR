@@ -77,8 +77,8 @@ export const api = {
     // The front-end AdminDashboard handles 'cancellation' logic by calling this API function
     // and then filtering the appointments list in the local state.
     // If full cancellation logic is needed, the backend needs a specific route (e.g., PUT /api/appointments/:id/cancel)
-    // For now, we use the DELETE route, which the backend supports.
-  }),
+ // For now, we use the DELETE route, which the backend supports.
+ }),
 
   rescheduleAppointment: (appointmentId, { date, time }) => apiCall(`api/appointments/${appointmentId}`, {
     method: 'PUT',
