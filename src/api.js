@@ -1,6 +1,6 @@
 const API_URL = import.meta.env.VITE_API_URL;
 
-// Get auth token from localStorage and encode as Basic Auth
+// Get auth credentials from localStorage and encode as Basic Auth
 const getAuthHeader = () => {
   const credentials = localStorage.getItem('authCredentials');
   if (credentials) {
@@ -40,57 +40,57 @@ const apiCall = async (endpoint, options = {}) => {
 
 export const api = {
   // Auth
-  signin: (email, password) => apiCall('/user/signin', {
+  signin: (email, password) => apiCall('/api/user/signin', {
     method: 'POST',
     body: JSON.stringify({ email, password })
   }),
-  signup: (data) => apiCall('/user/signup', {
+  signup: (data) => apiCall('/api/user/signup', {
     method: 'POST',
     body: JSON.stringify(data)
   }),
 
   // Services
-  getServices: () => apiCall('/services'),
-  createService: (data) => apiCall('/services', {
+  getServices: () => apiCall('/api/services'),
+  createService: (data) => apiCall('/api/services', {
     method: 'POST',
     body: JSON.stringify(data)
   }),
-  updateService: (id, data) => apiCall(`/services/${id}`, {
+  updateService: (id, data) => apiCall(`/api/services/${id}`, {
     method: 'PUT',
     body: JSON.stringify(data)
   }),
-  deleteService: (id) => apiCall(`/services/${id}`, {
+  deleteService: (id) => apiCall(`/api/services/${id}`, {
     method: 'DELETE'
   }),
 
   // Appointments
-  getAppointments: () => apiCall('/appointments'),
-  createAppointment: (data) => apiCall('/appointments', {
+  getAppointments: () => apiCall('/api/appointments'),
+  createAppointment: (data) => apiCall('/api/appointments', {
     method: 'POST',
     body: JSON.stringify(data)
   }),
-  cancelAppointment: (id) => apiCall(`/appointments/${id}`, {
+  cancelAppointment: (id) => apiCall(`/api/appointments/${id}`, {
     method: 'DELETE'
   }),
-  updateAppointment: (id, data) => apiCall(`/appointments/${id}`, {
+  updateAppointment: (id, data) => apiCall(`/api/appointments/${id}`, {
     method: 'PUT',
     body: JSON.stringify(data)
   }),
 
   // Availability
-  getAvailability: () => apiCall('/availability'),
-  createAvailability: (data) => apiCall('/availability', {
+  getAvailability: () => apiCall('/api/availability'),
+  createAvailability: (data) => apiCall('/api/availability', {
     method: 'POST',
     body: JSON.stringify(data)
   }),
-  deleteAvailability: (id) => apiCall(`/availability/${id}`, {
+  deleteAvailability: (id) => apiCall(`/api/availability/${id}`, {
     method: 'DELETE'
   }),
 
   // Users
-  getUsers: () => apiCall('/users'),
+  getUsers: () => apiCall('/api/users'),
 
   // Health check
-  ping: () => apiCall('/ping')
+  ping: () => apiCall('/api/ping')
 };
 export default api;
