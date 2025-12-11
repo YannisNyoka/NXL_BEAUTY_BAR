@@ -1,96 +1,223 @@
+// API utility functions for the NXL Beauty Bar application
+
 const API_URL = import.meta.env.VITE_API_URL;
 
-// Get auth credentials from localStorage and encode as Basic Auth
-const getAuthHeader = () => {
-  const credentials = localStorage.getItem('authCredentials');
-  if (credentials) {
-    const encoded = btoa(credentials); // Base64 encode email:password
-    return {
-      'Authorization': `Basic ${encoded}`
-    };
-  }
-  return {};
-};
-
+// Generic API call function with error handling
 const apiCall = async (endpoint, options = {}) => {
-  const headers = {
-    'Content-Type': 'application/json',
-    ...getAuthHeader(),
-    ...options.headers
-  };
-
   try {
-    const response = await fetch(`${API_URL}${endpoint}`, {
+    const url = `${API_URL}${endpoint}`;
+    console.log(`Making API call to: ${url}`);
+    
+    const response = await fetch(url, {
+      headers: {
+        'Content-Type': 'application/json',
+        ...options.headers,
+      },
       ...options,
-      headers
     });
 
-    const data = await response.json();
+    console.log(`Response status: ${response.status} ${response.statusText}`);
 
     if (!response.ok) {
-      throw new Error(data.error || `API Error: ${response.status}`);
+      // Try to get error message from response
+      let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+      try {
+        const errorData = await response.json();
+        errorMessage = errorData.message || errorMessage;
+      } catch (e) {
+        // If response is not JSON, use status text
+      }
+      throw new Error(errorMessage);
     }
 
-    return data;
+    const data = await response.json();
+    console.log('API response data:', data);
+    return { success: true, data };
   } catch (error) {
-    console.error(`API call failed for ${endpoint}:`, error);
-    throw error;
+    console.error('API call failed:', error);
+    return { success: false, error: error.message };
   }
 };
 
+// API functions
 export const api = {
-  // Auth
-  signin: (email, password) => apiCall('/api/user/signin', {
+  // Test connection
+  ping: () => apiCall('/api/ping'),
+
+  // User operations
+  signup: (userData) => apiCall('/api/user/signup', {
     method: 'POST',
-    body: JSON.stringify({ email, password })
-  }),
-  signup: (data) => apiCall('/api/user/signup', {
-    method: 'POST',
-    body: JSON.stringify(data)
+    body: JSON.stringify(userData),
   }),
 
-  // Services
-  getServices: () => apiCall('/api/services'),
-  createService: (data) => apiCall('/api/services', {
+  signin: (credentials) => apiCall('/api/user/signin', {
     method: 'POST',
-    body: JSON.stringify(data)
-  }),
-  updateService: (id, data) => apiCall(`/api/services/${id}`, {
-    method: 'PUT',
-    body: JSON.stringify(data)
-  }),
-  deleteService: (id) => apiCall(`/api/services/${id}`, {
-    method: 'DELETE'
+    body: JSON.stringify(credentials),
   }),
 
-  // Appointments
-  getAppointments: () => apiCall('/api/appointments'),
-  createAppointment: (data) => apiCall('/api/appointments', {
-    method: 'POST',
-    body: JSON.stringify(data)
-  }),
-  cancelAppointment: (id) => apiCall(`/api/appointments/${id}`, {
-    method: 'DELETE'
-  }),
-  updateAppointment: (id, data) => apiCall(`/api/appointments/${id}`, {
-    method: 'PUT',
-    body: JSON.stringify(data)
-  }),
-
-  // Availability
-  getAvailability: () => apiCall('/api/availability'),
-  createAvailability: (data) => apiCall('/api/availability', {
-    method: 'POST',
-    body: JSON.stringify(data)
-  }),
-  deleteAvailability: (id) => apiCall(`/api/availability/${id}`, {
-    method: 'DELETE'
-  }),
-
-  // Users
   getUsers: () => apiCall('/api/users'),
 
-  // Health check
-  ping: () => apiCall('/api/ping')
+  // Appointment operations
+  createAppointment: (appointmentData) => apiCall('/api/appointments', {
+    method: 'POST',
+    body: JSON.stringify(appointmentData),
+  }),
+
+  getAppointments: () => apiCall('/api/appointments'),
+
+  // Appointment management
+  cancelAppointment: (appointmentId, reason) => apiCall(`/api/appointments/${appointmentId}/cancel`, {
+    method: 'PUT',
+    body: JSON.stringify({ reason }),
+  }),
+
+  rescheduleAppointment: (appointmentId, { date, time }) => apiCall(`/api/appointments/${appointmentId}/reschedule`, {
+    method: 'PUT',
+    body: JSON.stringify({ date, time }),
+  }),
+
+  // Service operations
+  createService: (serviceData) => apiCall('/api/services', {
+    method: 'POST',
+    body: JSON.stringify(serviceData),
+  }),
+
+  getServices: () => apiCall('/api/services'),
+
+  updateService: async (serviceId, updateData) => {
+    // Send both durationMinutes and duration for backend compatibility
+    const payload = {
+      ...updateData,
+      duration: updateData.durationMinutes ?? updateData.duration,
+      durationMinutes: updateData.durationMinutes ?? updateData.duration,
+    };
+    // Primary: RESTful path /api/services/:id
+    let res = await apiCall(`/api/services/${serviceId}`, {
+      method: 'PUT',
+      body: JSON.stringify(payload),
+    });
+    if (res.success) return res;
+    // Fallback A: PUT /api/services with { id, ...payload }
+    res = await apiCall('/api/services', {
+      method: 'PUT',
+      body: JSON.stringify({ id: serviceId, ...payload }),
+    });
+    if (res.success) return res;
+    // Fallback B: POST /api/services/:id/update
+    res = await apiCall(`/api/services/${serviceId}/update`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+    return res;
+  },
+
+  deleteService: async (serviceId) => {
+    // Primary: DELETE /api/services/:id
+    let res = await apiCall(`/api/services/${serviceId}`, {
+      method: 'DELETE',
+    });
+    if (res.success) return res;
+    // Fallback A: DELETE /api/services with { id }
+    res = await apiCall('/api/services', {
+      method: 'DELETE',
+      body: JSON.stringify({ id: serviceId }),
+    });
+    if (res.success) return res;
+    // Fallback B: POST /api/services/:id/delete
+    res = await apiCall(`/api/services/${serviceId}/delete`, {
+      method: 'POST',
+      body: JSON.stringify({ id: serviceId }),
+    });
+    return res;
+  },
+
+  // Availability operations
+  getAvailability: async (params = {}) => {
+    const query = new URLSearchParams(params).toString();
+    const endpoint = query ? `/api/availability?${query}` : '/api/availability';
+    let res = await apiCall(endpoint);
+    if (res.success) return res;
+    // Fallback: admin namespace
+    const fallback = query ? `/api/admin/availability?${query}` : '/api/admin/availability';
+    res = await apiCall(fallback);
+    if (res.success) return res;
+    // Fallback: alternate naming
+    const fallback2 = query ? `/api/unavailable?${query}` : '/api/unavailable';
+    return apiCall(fallback2);
+  },
+
+  createAvailability: async (slotData) => {
+    // Try primary
+    let res = await apiCall('/api/availability', {
+      method: 'POST',
+      body: JSON.stringify(slotData),
+    });
+    if (res.success) return res;
+    // Fallback: admin namespace
+    res = await apiCall('/api/admin/availability', {
+      method: 'POST',
+      body: JSON.stringify(slotData),
+    });
+    if (res.success) return res;
+    // Fallback: alternate naming
+    res = await apiCall('/api/unavailable', {
+      method: 'POST',
+      body: JSON.stringify(slotData),
+    });
+    if (res.success) return res;
+    // Fallback: explicit create
+    res = await apiCall('/api/availability/create', {
+      method: 'POST',
+      body: JSON.stringify(slotData),
+    });
+    return res;
+  },
+
+  deleteAvailability: async (slotId) => {
+    // Try primary
+    let res = await apiCall(`/api/availability/${slotId}`, {
+      method: 'DELETE',
+    });
+    if (res.success) return res;
+    // Fallback: admin namespace
+    res = await apiCall(`/api/admin/availability/${slotId}`, {
+      method: 'DELETE',
+    });
+    if (res.success) return res;
+    // Fallback: alternate naming
+    res = await apiCall(`/api/unavailable/${slotId}`, {
+      method: 'DELETE',
+    });
+    if (res.success) return res;
+    // Fallback: explicit delete
+    res = await apiCall(`/api/availability/${slotId}/delete`, {
+      method: 'POST',
+      body: JSON.stringify({ id: slotId }),
+    });
+    return res;
+  },
+
+  // Employee operations
+  createEmployee: (employeeData) => apiCall('/api/employees', {
+    method: 'POST',
+    body: JSON.stringify(employeeData),
+  }),
+
+  getEmployees: () => apiCall('/api/employees'),
+
+  // Payment operations
+  createPayment: (paymentData) => apiCall('/api/payments', {
+    method: 'POST',
+    body: JSON.stringify(paymentData),
+  }),
+
+  getPayments: () => apiCall('/api/payments'),
+
+  // Email operations - DISABLED: Using EmailJS instead
+  // sendConfirmationEmail: (emailData) => apiCall('/api/send-confirmation-email', {
+  //   method: 'POST',
+  //   body: JSON.stringify(emailData),
+  // }),
 };
+
 export default api;
