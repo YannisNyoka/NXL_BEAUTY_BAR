@@ -13,10 +13,12 @@ const apiCall = async (endpoint, options = {}) => {
       ...options.headers,
     };
 
-    // Add Authorization header if token exists
-    const token = localStorage.getItem('authToken');
-    if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
+    // Add Basic Auth header if credentials exist in localStorage
+    const email = localStorage.getItem('userEmail');
+    const password = localStorage.getItem('userPassword');
+    if (email && password) {
+      const credentials = btoa(`${email}:${password}`);
+      headers['Authorization'] = `Basic ${credentials}`;
     }
 
     const response = await fetch(url, {
@@ -31,7 +33,7 @@ const apiCall = async (endpoint, options = {}) => {
       let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
       try {
         const errorData = await response.json();
-        errorMessage = errorData.message || errorMessage;
+        errorMessage = errorData.message || errorData.error || errorMessage;
       } catch (e) {
         // If response is not JSON, use status text
       }
@@ -92,118 +94,38 @@ export const api = {
 
   getServices: () => apiCall('/api/services'),
 
-  updateService: async (serviceId, updateData) => {
+  updateService: (serviceId, updateData) => {
     // Send both durationMinutes and duration for backend compatibility
     const payload = {
       ...updateData,
       duration: updateData.durationMinutes ?? updateData.duration,
       durationMinutes: updateData.durationMinutes ?? updateData.duration,
     };
-    // Primary: RESTful path /api/services/:id
-    let res = await apiCall(`/api/services/${serviceId}`, {
+    return apiCall(`/api/services/${serviceId}`, {
       method: 'PUT',
       body: JSON.stringify(payload),
     });
-    if (res.success) return res;
-    // Fallback A: PUT /api/services with { id, ...payload }
-    res = await apiCall('/api/services', {
-      method: 'PUT',
-      body: JSON.stringify({ id: serviceId, ...payload }),
-    });
-    if (res.success) return res;
-    // Fallback B: POST /api/services/:id/update
-    res = await apiCall(`/api/services/${serviceId}/update`, {
-      method: 'POST',
-      body: JSON.stringify(payload),
-    });
-    return res;
   },
 
-  deleteService: async (serviceId) => {
-    // Primary: DELETE /api/services/:id
-    let res = await apiCall(`/api/services/${serviceId}`, {
-      method: 'DELETE',
-    });
-    if (res.success) return res;
-    // Fallback A: DELETE /api/services with { id }
-    res = await apiCall('/api/services', {
-      method: 'DELETE',
-      body: JSON.stringify({ id: serviceId }),
-    });
-    if (res.success) return res;
-    // Fallback B: POST /api/services/:id/delete
-    res = await apiCall(`/api/services/${serviceId}/delete`, {
-      method: 'POST',
-      body: JSON.stringify({ id: serviceId }),
-    });
-    return res;
-  },
+  deleteService: (serviceId) => apiCall(`/api/services/${serviceId}`, {
+    method: 'DELETE',
+  }),
 
   // Availability operations
-  getAvailability: async (params = {}) => {
+  getAvailability: (params = {}) => {
     const query = new URLSearchParams(params).toString();
     const endpoint = query ? `/api/availability?${query}` : '/api/availability';
-    let res = await apiCall(endpoint);
-    if (res.success) return res;
-    // Fallback: admin namespace
-    const fallback = query ? `/api/admin/availability?${query}` : '/api/admin/availability';
-    res = await apiCall(fallback);
-    if (res.success) return res;
-    // Fallback: alternate naming
-    const fallback2 = query ? `/api/unavailable?${query}` : '/api/unavailable';
-    return apiCall(fallback2);
+    return apiCall(endpoint);
   },
 
-  createAvailability: async (slotData) => {
-    // Try primary
-    let res = await apiCall('/api/availability', {
-      method: 'POST',
-      body: JSON.stringify(slotData),
-    });
-    if (res.success) return res;
-    // Fallback: admin namespace
-    res = await apiCall('/api/admin/availability', {
-      method: 'POST',
-      body: JSON.stringify(slotData),
-    });
-    if (res.success) return res;
-    // Fallback: alternate naming
-    res = await apiCall('/api/unavailable', {
-      method: 'POST',
-      body: JSON.stringify(slotData),
-    });
-    if (res.success) return res;
-    // Fallback: explicit create
-    res = await apiCall('/api/availability/create', {
-      method: 'POST',
-      body: JSON.stringify(slotData),
-    });
-    return res;
-  },
+  createAvailability: (slotData) => apiCall('/api/availability', {
+    method: 'POST',
+    body: JSON.stringify(slotData),
+  }),
 
-  deleteAvailability: async (slotId) => {
-    // Try primary
-    let res = await apiCall(`/api/availability/${slotId}`, {
-      method: 'DELETE',
-    });
-    if (res.success) return res;
-    // Fallback: admin namespace
-    res = await apiCall(`/api/admin/availability/${slotId}`, {
-      method: 'DELETE',
-    });
-    if (res.success) return res;
-    // Fallback: alternate naming
-    res = await apiCall(`/api/unavailable/${slotId}`, {
-      method: 'DELETE',
-    });
-    if (res.success) return res;
-    // Fallback: explicit delete
-    res = await apiCall(`/api/availability/${slotId}/delete`, {
-      method: 'POST',
-      body: JSON.stringify({ id: slotId }),
-    });
-    return res;
-  },
+  deleteAvailability: (slotId) => apiCall(`/api/availability/${slotId}`, {
+    method: 'DELETE',
+  }),
 
   // Employee operations
   createEmployee: (employeeData) => apiCall('/api/employees', {
