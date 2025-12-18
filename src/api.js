@@ -8,11 +8,19 @@ const apiCall = async (endpoint, options = {}) => {
     const url = `${API_URL}${endpoint}`;
     console.log(`Making API call to: ${url}`);
     
+    const headers = {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    };
+
+    // Add Authorization header if token exists
+    const token = localStorage.getItem('authToken');
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
     const response = await fetch(url, {
-      headers: {
-        'Content-Type': 'application/json',
-        ...options.headers,
-      },
+      headers,
       ...options,
     });
 
