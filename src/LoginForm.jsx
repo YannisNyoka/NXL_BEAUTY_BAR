@@ -44,13 +44,13 @@ function LoginForm() {
       try {
         const result = await api.signin(form);
         if (result.success) {
-          // Store credentials in localStorage for API authentication
+          // Store credentials in localStorage FIRST for API authentication
           localStorage.setItem('userEmail', form.email);
           localStorage.setItem('userPassword', form.password);
           
           setApiSuccess('Welcome back! You have successfully signed in.');
           
-          // Get user details from the users endpoint
+          // Get user details from the users endpoint (now credentials are in localStorage)
           const usersResult = await api.getUsers();
           let userData = {
             email: form.email,
@@ -61,7 +61,7 @@ function LoginForm() {
           };
           
           // Find the current user in the users list
-          if (usersResult.success) {
+          if (usersResult.success && usersResult.data) {
             const currentUser = usersResult.data.find(user => user.email === form.email);
             if (currentUser) {
               userData = {
