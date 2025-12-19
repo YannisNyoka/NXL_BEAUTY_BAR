@@ -28,15 +28,22 @@ function AdminDashboard() {
   // Load services from backend
   useEffect(() => {
     const loadServices = async () => {
-      const result = await api.getServices();
-      if (result.success) {
-        const normalized = (Array.isArray(result.data) ? result.data : []).map(s => ({
-          id: s._id || s.id,
-          name: s.name,
-          duration: s.durationMinutes ?? s.duration,
-          price: s.price,
-        }));
-        setServices(normalized);
+      try {
+        const result = await api.getServices();
+        console.log('Services API result:', result);
+        if (result.success) {
+          const normalized = (Array.isArray(result.data) ? result.data : []).map(s => ({
+            id: s._id || s.id,
+            name: s.name,
+            duration: s.durationMinutes ?? s.duration,
+            price: s.price,
+          }));
+          setServices(normalized);
+        } else {
+          console.error('Failed to load services:', result.error);
+        }
+      } catch (err) {
+        console.error('Error loading services:', err);
       }
     };
     loadServices();
@@ -145,17 +152,24 @@ function AdminDashboard() {
   
   useEffect(() => {
     const loadAvailability = async () => {
-      const result = await api.getAvailability();
-      if (result.success) {
-        const normalized = (Array.isArray(result.data) ? result.data : []).map(s => ({
-          id: s._id || s.id,
-          date: s.date,
-          time: s.time,
-          reason: s.reason || '',
-          stylist: s.employeeId || 'All',
-          status: 'unavailable',
-        }));
-        setUnavailableSlots(pruneExpiredUnavailableSlots(normalized));
+      try {
+        const result = await api.getAvailability();
+        console.log('Availability API result:', result);
+        if (result.success) {
+          const normalized = (Array.isArray(result.data) ? result.data : []).map(s => ({
+            id: s._id || s.id,
+            date: s.date,
+            time: s.time,
+            reason: s.reason || '',
+            stylist: s.employeeId || 'All',
+            status: 'unavailable',
+          }));
+          setUnavailableSlots(pruneExpiredUnavailableSlots(normalized));
+        } else {
+          console.error('Failed to load availability:', result.error);
+        }
+      } catch (err) {
+        console.error('Error loading availability:', err);
       }
     };
     loadAvailability();
@@ -234,6 +248,7 @@ function AdminDashboard() {
     try {
       setLoadingAppointments(true);
       const result = await api.getAppointments();
+      console.log('Appointments API result:', result);
       if (result.success) {
         // Exclude cancelled appointments based on localStorage and format
         let cancelled = [];
@@ -256,6 +271,7 @@ function AdminDashboard() {
           }));
         setAppointments(formattedAppointments);
       } else {
+        console.error('Failed to fetch appointments:', result.error);
         // Use mock data if API fails
         let cancelled = [];
         try {
