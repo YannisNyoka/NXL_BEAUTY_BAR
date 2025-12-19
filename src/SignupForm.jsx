@@ -49,6 +49,10 @@ function SignupForm() {
       try {
         const result = await api.signup(form);
         if (result.success) {
+          // Store credentials in localStorage for API authentication
+          localStorage.setItem('userEmail', form.email);
+          localStorage.setItem('userPassword', form.password);
+          
           setApiSuccess('Welcome to NXL Beauty Bar! Your account has been created successfully.');
           setSubmitted(true);
           setForm({
@@ -167,4 +171,4 @@ function SignupForm() {
   );
 }
 
-export default SignupForm; 
+export default SignupForm;

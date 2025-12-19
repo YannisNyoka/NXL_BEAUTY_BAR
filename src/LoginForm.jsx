@@ -44,6 +44,10 @@ function LoginForm() {
       try {
         const result = await api.signin(form);
         if (result.success) {
+          // Store credentials in localStorage for API authentication
+          localStorage.setItem('userEmail', form.email);
+          localStorage.setItem('userPassword', form.password);
+          
           setApiSuccess('Welcome back! You have successfully signed in.');
           
           // Get user details from the users endpoint
