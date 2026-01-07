@@ -56,21 +56,48 @@ function Dashboard() {
     employee: false
   });
 
-  // Load services from backend
-  const [services, setServices] = useState([]);
+  // Load services from localStorage immediately (admin-managed) with fallback defaults
+  const [services, setServices] = useState(() => {
+    try {
+      const saved = localStorage.getItem('services');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) {
+          return parsed.map(s => ({
+            name: s.name,
+            duration: s.duration,
+            price: s.price
+          }));
+        }
+      }
+    } catch {}
+    // Fallback defaults if nothing saved yet
+    return [
+      { name: 'Manicure', duration: 45, price: 150 },
+      { name: 'Pedicure', duration: 20, price: 100 },
+      { name: 'Lashes', duration: 30, price: 120 },
+      { name: 'Tinting', duration: 20, price: 80 }
+    ];
+  });
+
+  // Reflect admin changes across tabs/windows without reload
   useEffect(() => {
-    const loadServices = async () => {
-      const result = await api.getServices();
-      if (result.success) {
-        const normalized = (Array.isArray(result.data) ? result.data : []).map(s => ({
-          name: s.name,
-          duration: s.durationMinutes ?? s.duration,
-          price: s.price,
-        }));
-        setServices(normalized);
+    const onStorage = (e) => {
+      if (e.key === 'services') {
+        try {
+          const parsed = JSON.parse(e.newValue || '[]');
+          if (Array.isArray(parsed)) {
+            setServices(parsed.map(s => ({
+              name: s.name,
+              duration: s.duration,
+              price: s.price
+            })));
+          }
+        } catch {}
       }
     };
-    loadServices();
+    window.addEventListener('storage', onStorage);
+    return () => window.removeEventListener('storage', onStorage);
   }, []);
   const timeSlots = {
     morning: [
@@ -128,30 +155,32 @@ function Dashboard() {
     return (Array.isArray(slots) ? slots : []).filter((s) => parseSlotDateTime(s) >= now);
   };
 
-  // Load availability from backend when date or employee changes
+  // Load from localStorage on mount
   useEffect(() => {
-    const loadAvailability = async () => {
-      try {
-        // Format selected date to YYYY-MM-DD
-        const dateObj = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), selectedDate);
-        const isoDate = dateObj.toISOString().slice(0, 10);
-        const result = await api.getAvailability({ date: isoDate, employeeId: selectedEmployee });
-        if (result.success) {
-          const monthName = getMonthName(currentMonth);
-          const dateLabel = `${monthName} ${selectedDate}`;
-          const normalized = (Array.isArray(result.data) ? result.data : []).map(s => ({
-            date: dateLabel,
-            time: s.time,
-            stylist: s.employeeId || 'All',
-          }));
-          setUnavailableSlots(pruneExpiredUnavailableSlots(normalized));
+    let initial = [];
+    try {
+      initial = JSON.parse(localStorage.getItem('unavailableSlots') || '[]');
+    } catch {
+      initial = [];
+    }
+    setUnavailableSlots(pruneExpiredUnavailableSlots(initial));
+  }, []);
+
+  // Sync on cross-tab changes
+  useEffect(() => {
+    const onStorage = (e) => {
+      if (e.key === 'unavailableSlots') {
+        try {
+          const incoming = JSON.parse(e.newValue || '[]');
+          setUnavailableSlots(pruneExpiredUnavailableSlots(incoming));
+        } catch {
+          // ignore
         }
-      } catch (e) {
-        console.error('Failed to load availability', e);
       }
     };
-    loadAvailability();
-  }, [selectedDate, selectedEmployee, currentMonth]);
+    window.addEventListener('storage', onStorage);
+    return () => window.removeEventListener('storage', onStorage);
+  }, []);
   // Fetch appointments from API
   useEffect(() => {
     fetchAppointments();
@@ -169,8 +198,12 @@ function Dashboard() {
       setLoadingAppointments(true);
       const result = await api.getAppointments();
       if (result.success) {
-        const formattedSlots = (Array.isArray(result.data) ? result.data : [])
-          .filter(appointment => appointment.status !== 'Cancelled')
+        // Get cancelled appointments from localStorage
+        const cancelledAppointments = JSON.parse(localStorage.getItem('cancelledAppointments') || '[]');
+        
+        // Convert API appointments to dashboard format and filter out cancelled ones
+        const formattedSlots = result.data
+          .filter(appointment => !cancelledAppointments.includes(appointment._id)) // Exclude cancelled
           .map(appointment => ({
             date: appointment.date,
             time: appointment.time,
@@ -178,7 +211,7 @@ function Dashboard() {
             serviceType: appointment.serviceIds ? 'Multiple Services' : 'Service',
             appointmentId: appointment._id
           }))
-          .filter(slot => slot.time);
+          .filter(slot => slot.time); // Filter out appointments without time
         setBookedSlots(formattedSlots);
       } else {
         console.error('Failed to fetch appointments:', result.error);
