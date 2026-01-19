@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState } from 'react';
 
 const AuthContext = createContext();
 
@@ -11,55 +11,38 @@ export const useAuth = () => {
 };
 
 export const AuthProvider = ({ children }) => {
-    // Initialize from localStorage synchronously to avoid redirect on first render
-    const [user, setUser] = useState(() => {
-        try {
-            const saved = localStorage.getItem('authUser');
-            return saved ? JSON.parse(saved) : null;
-        } catch {
-            return null;
-        }
-    });
-    const [isAuthenticated, setIsAuthenticated] = useState(() => {
-        return localStorage.getItem('isAuthenticated') === 'true';
-    });
-    const [appointmentRefreshTrigger, setAppointmentRefreshTrigger] = useState(0);
+  const [user, setUser] = useState(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [appointmentRefreshTrigger, setAppointmentRefreshTrigger] = useState(0);
 
-    const login = (userData) => {
-        setUser(userData);
-        setIsAuthenticated(true);
-        localStorage.setItem('authUser', JSON.stringify(userData));
-        localStorage.setItem('isAuthenticated', 'true');
-        if (userData.isAdmin) {
-            localStorage.setItem('isAdmin', 'true');
-        }
-    };
+  const login = (userData) => {
+    setUser(userData);
+    setIsAuthenticated(true);
+  };
 
-    const logout = () => {
-        setUser(null);
-        setIsAuthenticated(false);
-        localStorage.removeItem('authUser');
-        localStorage.removeItem('isAuthenticated');
-        localStorage.removeItem('isAdmin');
-    };
+  const logout = () => {
+    setUser(null);
+    setIsAuthenticated(false);
+    localStorage.removeItem('isAdmin');
+  };
 
-    // Function to trigger appointment refresh across all components
-    const triggerAppointmentRefresh = () => {
-        setAppointmentRefreshTrigger(prev => prev + 1);
-    };
+  // Function to trigger appointment refresh across all components
+  const triggerAppointmentRefresh = () => {
+    setAppointmentRefreshTrigger(prev => prev + 1);
+  };
 
-    const value = {
-        user,
-        isAuthenticated,
-        login,
-        logout,
-        appointmentRefreshTrigger,
-        triggerAppointmentRefresh
-    };
+  const value = {
+    user,
+    isAuthenticated,
+    login,
+    logout,
+    appointmentRefreshTrigger,
+    triggerAppointmentRefresh
+  };
 
-    return (
-        <AuthContext.Provider value={value}>
-            {children}
-        </AuthContext.Provider>
-    );
-};
+  return (
+    <AuthContext.Provider value={value}>
+      {children}
+    </AuthContext.Provider>
+  );
+}; 

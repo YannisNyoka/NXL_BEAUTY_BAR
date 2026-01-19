@@ -33,8 +33,6 @@ function getUserLocationAndRedirect() {
 
 function Home() {
   const [connectionStatus, setConnectionStatus] = useState('Testing...');
-  const [flipped, setFlipped] = useState({ manicure: false, pedicure: false, lashes: false });
-  const flip = (key) => setFlipped(prev => ({ ...prev, [key]: !prev[key] }));
   
   useEffect(() => {
     // Test backend connection and fetch data
@@ -78,7 +76,7 @@ function Home() {
     <div className="home-container">
       {/* Hero Section */}
       <div className="hero-section">
-        <h1 className="hero-title">WELCOME TO NXL BEAUTY BAR </h1>
+        <h1 className="hero-title">WELCOME TO NXL BEAUTY BAR CREATIONS</h1>
         
         {/* Connection Status Indicator */}
         <div style={{
@@ -111,7 +109,7 @@ function Home() {
             <span className="nail-il">IL</span>
           </div>
           <div className="artist-signature">
-            <span className="polished-by">Polished by</span>
+            <span className="polished-by">polished by</span>
             <span className="artist-name"><i>NXL BEAUTY BAR</i></span>
           </div>
         </div>
@@ -124,11 +122,11 @@ function Home() {
 
       {/* About Section */}
       <div className="about-section">
-        <h2 className="section-title">Say hello to your nail artist</h2>
+        <h2 className="section-title">say hello to your nail artist</h2>
         <div className="about-content">
           <p>
-            Welcome to NXL Beauty Bar! We are passionate about creating beautiful, 
-            long-lasting Nails and Lashes that makes you feel confident and beautiful. 
+            Welcome to NXL Beauty Bar creations! We are passionate about creating beautiful, 
+            long-lasting nails that makes you feel confident and beautiful. 
             With years of experience in the beauty industry, we specialize in 
             all kinds of manicures and Pedicures, and eyelashes. Every client receives 
             personalized attention and care to ensure the perfect result to your satisfaction.
@@ -138,145 +136,54 @@ function Home() {
 
       {/* Services Preview */}
       <div className="services-preview">
-        <h2 className="section-title">Our Services</h2>
-        <div className="services-grid" style={{display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(260px, 1fr))', gap:'24px'}}>
-          {/* Manicure card */}
-          <div className="service-card" style={{cursor:'pointer', perspective:'1000px'}} onClick={() => flip('manicure')}>
-            <div style={{position:'relative', height:'320px', transition:'transform 0.6s', transformStyle:'preserve-3d', transform: flipped.manicure ? 'rotateY(180deg)' : 'none'}}>
-              {/* Front */}
-              <div style={{position:'absolute', inset:0, backfaceVisibility:'hidden', background:'#fff', borderRadius:'16px', boxShadow:'0 8px 20px rgba(0,0,0,0.08)', padding:'20px', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'space-between'}}>
-                <div className="service-icon artist-image" style={{width:'180px', height:'180px', borderRadius:'50%', overflow:'hidden', boxShadow:'0 2px 8px rgba(0,0,0,0.08)'}}>
-                  <img src={manicureImage} alt="Manicure" style={{width:'100%', height:'100%', objectFit:'cover'}}/>
-                </div>
-                <div style={{textAlign:'center'}}>
-                  <h3>Manicure</h3>
-                  <p>Long-lasting, chip-resistant polish</p>
-                </div>
-              </div>
-              {/* Back */}
-              <div style={{position:'absolute', inset:0, backfaceVisibility:'hidden', transform:'rotateY(180deg)', background:'#fff', borderRadius:'16px', boxShadow:'0 8px 20px rgba(0,0,0,0.08)', padding:'22px', display:'flex', flexDirection:'column', justifyContent:'center', alignItems:'center'}}>
-                <h3 style={{marginBottom:'8px'}}>Manicure </h3>
-                <ul style={{listStyle:'none', padding:0, margin:0, textAlign:'center'}}>
-                  <li>Rubberbase</li>
-                  <li>Acrylic</li>
-                  <li>Polygel</li>
-                </ul>
-                <small style={{marginTop:'12px', color:'#777'}}></small>
-              </div>
+        <h2 className="section-title">our services</h2>
+        <div className="services-grid">
+          <div className="service-card">
+            <div className="service-icon artist-image">
+              <img src= {manicureImage}/>
             </div>
+            <h3> Manicure</h3>
+            <p>Long-lasting, chip-resistant polish</p>
           </div>
-
-          {/* Pedicure card */}
-          <div className="service-card" style={{cursor:'pointer', perspective:'1000px'}} onClick={() => flip('pedicure')}>
-            <div style={{position:'relative', height:'320px', transition:'transform 0.6s', transformStyle:'preserve-3d', transform: flipped.pedicure ? 'rotateY(180deg)' : 'none'}}>
-              {/* Front */}
-              <div style={{position:'absolute', inset:0, backfaceVisibility:'hidden', background:'#fff', borderRadius:'16px', boxShadow:'0 8px 20px rgba(0,0,0,0.08)', padding:'20px', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'space-between'}}>
-                <div className="service-icon artist-image" style={{width:'180px', height:'180px', borderRadius:'50%', overflow:'hidden', boxShadow:'0 2px 8px rgba(0,0,0,0.08)'}}>
-                  <img src={pedicureImage} alt="Pedicure" style={{width:'100%', height:'100%', objectFit:'cover'}}/>
-                </div>
-                <div style={{textAlign:'center'}}>
-                  <h3>Pedicure</h3>
-                  <p>Custom designs and patterns</p>
-                </div>
-              </div>
-              {/* Back */}
-              <div style={{position:'absolute', inset:0, backfaceVisibility:'hidden', transform:'rotateY(180deg)', background:'#fff', borderRadius:'16px', boxShadow:'0 8px 20px rgba(0,0,0,0.08)', padding:'22px', display:'flex', flexDirection:'column', justifyContent:'center', alignItems:'center'}}>
-                <h3 style={{marginBottom:'8px'}}>Pedicure </h3>
-                <ul style={{listStyle:'none', padding:0, margin:0, textAlign:'center'}}>
-                  <li>Classic Pedicure</li>
-                  <li>Basic Pedicure</li>
-                  <li>Acrilic Pedi</li>
-                  <li>French Pedi</li>
-                </ul>
-                <small style={{marginTop:'12px', color:'#777'}}></small>
-              </div>
-            </div>
+          <div className="service-card">
+            <div className="service-icon artist-image">
+              <img src={pedicureImage}/></div>
+            <h3>Pedicure</h3>
+            <p>Custom designs and patterns</p>
           </div>
-
-          {/* Lashes card */}
-          <div className="service-card" style={{cursor:'pointer', perspective:'1000px'}} onClick={() => flip('lashes')}>
-            <div style={{position:'relative', height:'320px', transition:'transform 0.6s', transformStyle:'preserve-3d', transform: flipped.lashes ? 'rotateY(180deg)' : 'none'}}>
-              {/* Front */}
-              <div style={{position:'absolute', inset:0, backfaceVisibility:'hidden', background:'#fff', borderRadius:'16px', boxShadow:'0 8px 20px rgba(0,0,0,0.08)', padding:'20px', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'space-between'}}>
-                <div className="service-icon artist-image" style={{width:'180px', height:'180px', borderRadius:'50%', overflow:'hidden', boxShadow:'0 2px 8px rgba(0,0,0,0.08)'}}>
-                  <img src={eyelashesImage} alt="Eye Lashes" style={{width:'100%', height:'100%', objectFit:'cover'}}/>
-                </div>
-                <div style={{textAlign:'center'}}>
-                  <h3>Eye Lashes</h3>
-                  <p>Professional extensions</p>
-                </div>
+          <div className="service-card">
+            <div className="service-icon artist-image">
+              <img src={eyelashesImage}/>
               </div>
-              {/* Back */}
-              <div style={{position:'absolute', inset:0, backfaceVisibility:'hidden', transform:'rotateY(180deg)', background:'#fff', borderRadius:'16px', boxShadow:'0 8px 20px rgba(0,0,0,0.08)', padding:'22px', display:'flex', flexDirection:'column', justifyContent:'center', alignItems:'center'}}>
-                <h3 style={{marginBottom:'8px'}}>Eyelashes</h3>
-                <ul style={{listStyle:'none', padding:0, margin:0, textAlign:'center'}}>
-                  <li>Classic Set</li>
-                  <li>Volume Set</li>
-                  <li>Hybrid</li>
-                </ul>
-                <small style={{marginTop:'12px', color:'#777'}}></small>
-              </div>
-            </div>
+            <h3>Eye Lashes</h3>
+            <p>Professional acrylic extensions</p>
           </div>
         </div>
       </div>
 
       {/* Navigation */}
       <div className="navigation-section">
-        <h2 className="section-title">Ready to book?</h2>
+        <h2 className="section-title">ready to book?</h2>
         <div className="navigation-links">
           <Link to="/signup" className="nav-link primary">Create Account</Link>
           <Link to="/login" className="nav-link secondary">Sign In</Link>
           <Link to="/dashboard" className="nav-link secondary">Dashboard </Link>
         </div>
-
       </div>
 
       {/* Contact Info */}
       <div className="contact-info">
         <div className="contact-item">
-          <span className="contact-icon" aria-hidden="true" style={{display:'inline-flex'}}>
-            <svg width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-              <rect x="1" y="1" width="22" height="22" rx="5" fill="#1877F2"/>
-              <path d="M13.2 9.3h1.8V6.8h-1.8c-1.9 0-3.1 1.2-3.1 3.1v1.6H9.1v2.5h1.9v6h2.8v-6h2l.5-2.5h-2.5V9.9c0-.4.2-.6.9-.6z" fill="#ffffff"/>
-            </svg>
-          </span>
-          <span><a href="https://www.facebook.com/share/17g73Pcr9j/" target="_blank" rel="noopener noreferrer">
-  Facebook
-</a>
-</span>
+          <span className="contact-icon">📞</span>
+          <span>(+27)68 511-3394</span>
         </div>
         <div className="contact-item">
-          <span className="contact-icon" aria-hidden="true" style={{display:'inline-flex'}}>
-            <svg width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-              <defs>
-                <linearGradient id="igGrad" x1="0" y1="0" x2="1" y2="1">
-                  <stop offset="0%" stopColor="#f58529"/>
-                  <stop offset="50%" stopColor="#dd2a7b"/>
-                  <stop offset="100%" stopColor="#8134af"/>
-                </linearGradient>
-              </defs>
-              <rect x="1" y="1" width="22" height="22" rx="5" fill="url(#igGrad)"/>
-              <rect x="7" y="7" width="10" height="10" rx="5" fill="none" stroke="#fff" strokeWidth="2"/>
-              <circle cx="16.5" cy="7.5" r="1.3" fill="#fff"/>
-            </svg>
-          </span>
-          <span><a href="https://www.instagram.com/nxlbeauty?igsh=Z2tnOTl0OXdmdmxz" target="_blank" rel="noopener noreferrer">
-  Instagram
-</a>
-</span>
+          <span className="contact-icon">📧</span>
+          <span>NXLBEAUTYBAR@GMAIL.COM</span>
         </div>
         <div className="contact-item">
-          <span className="contact-icon" aria-hidden="true" style={{display:'inline-flex'}}>
-            <svg width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-              <rect x="1" y="1" width="22" height="22" rx="5" fill="#000"/>
-              <path d="M9 7.5c1.7 0 3.2.9 4.1 2.3v6.7h-2v-4.2c-.6-.4-1.4-.6-2.1-.6-1.9 0-3.5 1.2-3.5 3.1 0 1.6 1.2 2.9 2.8 3.1-2.2-.2-4-2.1-4-4.4 0-2.5 2.1-4.4 4.7-4.4zM15 7.2c.7.3 1.3.8 1.8 1.4v6.9h-1.8V7.2z" fill="#fff"/>
-            </svg>
-          </span>
-          <span ><a href="https://www.tiktok.com/@nxlbeautybar?_r=1&_t=ZS-91Q3zPzMphH" target="_blank" rel="noopener noreferrer">
-   TikTok
-</a>
-</span>
+          <span className="contact-icon">📱</span>
+          <span>@nxlbeauty</span>
         </div>
       </div>
 

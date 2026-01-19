@@ -1,19 +1,14 @@
-import { useState, useEffect, useRef } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from './AuthContext';
 import { api } from './api';
 
 function AdminDashboard() {
   const navigate = useNavigate();
-  const { user, logout } = useAuth();
-  const [activeTab, setActiveTab] = useState(() => localStorage.getItem('adminActiveTab') || 'dashboard');
+  const { user, logout, isAuthenticated } = useAuth();
+  const [activeTab, setActiveTab] = useState('dashboard');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
-  
-  // Persist active tab selection across refreshes
-  useEffect(() => {
-    localStorage.setItem('adminActiveTab', activeTab);
-  }, [activeTab]);
   
   // Appointments state
   const [appointments, setAppointments] = useState([]);
@@ -30,181 +25,10 @@ function AdminDashboard() {
   const [showServiceForm, setShowServiceForm] = useState(false);
   const [serviceForm, setServiceForm] = useState({ name: '', duration: '', price: '' });
   
-  // Persist services to localStorage and hydrate on load
-  const servicesInitializedRef = useRef(false);
-  
-  useEffect(() => {
-    const saved = localStorage.getItem('services');
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed)) {
-          setServices(parsed);
-        }
-      } catch (e) {
-        // ignore JSON errors
-      }
-    }
-    servicesInitializedRef.current = true;
-  }, []);
-  
-  useEffect(() => {
-    if (servicesInitializedRef.current) {
-      localStorage.setItem('services', JSON.stringify(services));
-    }
-  }, [services]);
-  
   // Unavailable dates/time slots state
   const [unavailableSlots, setUnavailableSlots] = useState([]);
   const [showUnavailableForm, setShowUnavailableForm] = useState(false);
-
-  const [unavailableForm, setUnavailableForm] = useState({ date: '', time: '', reason: '', stylist: 'All', status: 'unavailable' });
-  const unavailabilityInitializedRef = useRef(false);
-
-  // Admin availability selection panels state
-  const [adminCurrentMonth, setAdminCurrentMonth] = useState(new Date());
-  const [adminSelectedDate, setAdminSelectedDate] = useState(null);
-  const [adminSelectedTimes, setAdminSelectedTimes] = useState([]);
-  const timeSlots = {
-    morning: ['09:00 am', '10:30 am'],
-    afternoon: ['12:00 pm', '01:30 pm', '03:00 pm', '04:30 pm']
-  };
-
-  // Parse "October 2025 7" + "09:00 am" or "13:30" into a Date
-  const parseTimeString = (timeStr) => {
-    try {
-      if (!timeStr) return { hours: 0, minutes: 0 };
-      const ts = String(timeStr).trim().toLowerCase();
-      let hours = 0;
-      let minutes = 0;
-      if (ts.includes('am') || ts.includes('pm')) {
-        const [hm, suffix] = ts.split(' ').map(s => s.trim());
-        const [h, m] = hm.split(':');
-        hours = parseInt(h, 10) || 0;
-        minutes = parseInt(m, 10) || 0;
-        if (suffix === 'pm' && hours < 12) hours += 12;
-        if (suffix === 'am' && hours === 12) hours = 0;
-      } else {
-        const [h, m] = ts.split(':');
-        hours = parseInt(h, 10) || 0;
-        minutes = parseInt(m, 10) || 0;
-      }
-      return { hours, minutes };
-    } catch {
-      return { hours: 0, minutes: 0 };
-    }
-  };
-
-  const parseSlotDateTime = (slot) => {
-    try {
-      const dateStr = String(slot?.date || '').trim();
-      const parts = dateStr.split(' '); // e.g., ['October', '2025', '7']
-      if (parts.length < 3) return new Date(0);
-      const [month, year, day] = parts;
-      const base = new Date(`${month} ${day}, ${year}`);
-      if (isNaN(base.getTime())) return new Date(0);
-
-      // Expire after the day ends, regardless of slot time
-      base.setHours(23, 59, 59, 999);
-      return base;
-    } catch {
-      return new Date(0);
-    }
-  };
-
-  const pruneExpiredUnavailableSlots = (slots) => {
-    const now = new Date();
-    return (Array.isArray(slots) ? slots : []).filter((s) => {
-      const dt = parseSlotDateTime(s);
-      return dt.getTime() >= now.getTime();
-    });
-  };
-
-  const adminGetDaysInMonth = (date) => {
-    const year = date.getFullYear();
-    const month = date.getMonth();
-    const firstDay = new Date(year, month, 1);
-    const lastDay = new Date(year, month + 1, 0);
-
-    // Align calendar to Monday-first. Convert JS Sunday=0..Saturday=6 to Monday=0..Sunday=6
-    const startingDay = (firstDay.getDay() + 6) % 7;
-    const days = [];
-    for (let i = 0; i < startingDay; i++) days.push(null);
-    for (let d = 1; d <= lastDay.getDate(); d++) days.push(d);
-    return days;
-  };
-
-  const adminGetMonthName = (date) => date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
-
-  const adminHandleMonthChange = (direction) => {
-    const next = new Date(adminCurrentMonth);
-    next.setMonth(next.getMonth() + (direction === 'next' ? 1 : -1));
-    setAdminCurrentMonth(next);
-  };
-
-  const adminHandleDateSelect = (day) => {
-    if (!day) return;
-    setAdminSelectedDate(day);
-    setUnavailableForm(prev => ({ ...prev, date: `${adminGetMonthName(adminCurrentMonth)} ${day}` }));
-  };
-
-  const adminHandleTimeSelect = (time) => {
-    setAdminSelectedTimes(prev => {
-      const exists = prev.includes(time);
-      return exists ? prev.filter(t => t !== time) : [...prev, time];
-    });
-  };
-  
-  useEffect(() => {
-    try {
-      const savedUnavailability = localStorage.getItem('unavailableSlots');
-      let parsed = [];
-      if (savedUnavailability) {
-        parsed = JSON.parse(savedUnavailability);
-      }
-      const pruned = pruneExpiredUnavailableSlots(parsed);
-      setUnavailableSlots(pruned);
-      if (Array.isArray(parsed) && pruned.length !== parsed.length) {
-        localStorage.setItem('unavailableSlots', JSON.stringify(pruned));
-      }
-    } catch {}
-    unavailabilityInitializedRef.current = true;
-  }, []);
-  
-  useEffect(() => {
-    if (unavailabilityInitializedRef.current) {
-      localStorage.setItem('unavailableSlots', JSON.stringify(unavailableSlots));
-    }
-  }, [unavailableSlots]);
-
-  // Periodically prune expired slots
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setUnavailableSlots(prev => {
-        const pruned = pruneExpiredUnavailableSlots(prev);
-        if (pruned.length !== prev.length) {
-          localStorage.setItem('unavailableSlots', JSON.stringify(pruned));
-        }
-        return pruned;
-      });
-    }, 60000);
-    return () => clearInterval(interval);
-  }, []);
-  
-  useEffect(() => {
-    const onStorage = (e) => {
-      if (e.key === 'unavailableSlots') {
-        try {
-          const parsed = JSON.parse(e.newValue || '[]');
-          if (Array.isArray(parsed)) {
-            setUnavailableSlots(pruneExpiredUnavailableSlots(parsed));
-          }
-        } catch {}
-      }
-    };
-    window.addEventListener('storage', onStorage);
-    return () => window.removeEventListener('storage', onStorage);
-  }, []);
+  const [unavailableForm, setUnavailableForm] = useState({ date: '', time: '', reason: '' });
   
   // Stats state
   const [stats, setStats] = useState({
@@ -214,13 +38,28 @@ function AdminDashboard() {
     upcomingAppointments: 0
   });
   
-  // Check if user is admin
+  // Check if user is admin - only users with nxlbeautybar email can access
   useEffect(() => {
-    const isAdmin = localStorage.getItem('isAdmin');
-    if (!isAdmin) {
+    // Wait for user to be loaded if authenticated
+    if (!isAuthenticated) {
       navigate('/login');
+      return;
     }
-  }, [navigate]);
+    
+    // If user is authenticated, check admin access
+    if (isAuthenticated && user) {
+      const isAdmin = localStorage.getItem('isAdmin');
+      const userEmail = user?.email || '';
+      const emailLower = userEmail.toLowerCase();
+      const isNxlBeautyBarEmail = emailLower.includes('nxlbeautybar');
+      
+      // Redirect if not admin or not nxlbeautybar email
+      if (!isAdmin || !isNxlBeautyBarEmail) {
+        localStorage.removeItem('isAdmin');
+        navigate('/login');
+      }
+    }
+  }, [navigate, user, isAuthenticated]);
   
   // Fetch appointments on component mount
   useEffect(() => {
@@ -250,37 +89,22 @@ function AdminDashboard() {
       setLoadingAppointments(true);
       const result = await api.getAppointments();
       if (result.success) {
-        // Exclude cancelled appointments based on localStorage and format
-        let cancelled = [];
-        try {
-          cancelled = JSON.parse(localStorage.getItem('cancelledAppointments') || '[]').map(String);
-        } catch {
-          cancelled = [];
-        }
-
-        const formattedAppointments = result.data
-          .filter(appt => !cancelled.includes(String(appt._id)))
-          .map(appt => ({
-            id: appt._id,
-            date: appt.date,
-            time: appt.time,
-            clientName: appt.userName || appt.clientName || 'Unknown',
-            services: appt.serviceIds || ['Service'],
-            status: 'confirmed',
-            totalPrice: appt.totalPrice || 0
-          }));
+        // Format appointments from API
+        const formattedAppointments = result.data.map(appt => ({
+          id: appt._id,
+          date: appt.date,
+          time: appt.time,
+          clientName: appt.userName || appt.clientName || 'Unknown',
+          services: appt.serviceIds || ['Service'],
+          status: 'confirmed',
+          totalPrice: appt.totalPrice || 0
+        }));
         setAppointments(formattedAppointments);
       } else {
         // Use mock data if API fails
-        let cancelled = [];
-        try {
-          cancelled = JSON.parse(localStorage.getItem('cancelledAppointments') || '[]').map(String);
-        } catch {
-          cancelled = [];
-        }
-        const mock = [
+        setAppointments([
           {
-            id: '1',
+            id: 1,
             date: 'October 2025 7',
             time: '09:00 am',
             clientName: 'Jane Doe',
@@ -289,7 +113,7 @@ function AdminDashboard() {
             totalPrice: 270
           },
           {
-            id: '2',
+            id: 2,
             date: 'October 2025 8',
             time: '12:00 pm',
             clientName: 'John Smith',
@@ -298,7 +122,7 @@ function AdminDashboard() {
             totalPrice: 100
           },
           {
-            id: '3',
+            id: 3,
             date: 'October 2025 9',
             time: '03:00 pm',
             clientName: 'Mary Johnson',
@@ -306,8 +130,7 @@ function AdminDashboard() {
             status: 'confirmed',
             totalPrice: 80
           }
-        ].filter(apt => !cancelled.includes(String(apt.id)));
-        setAppointments(mock);
+        ]);
       }
     } catch (error) {
       console.error('Error fetching appointments:', error);
@@ -376,58 +199,31 @@ function AdminDashboard() {
     }
   };
   
-  const handleUnavailableSave = () => {
-    const dateStr = adminSelectedDate ? `${adminGetMonthName(adminCurrentMonth)} ${adminSelectedDate}` : unavailableForm.date;
-    const selectedTimes = adminSelectedTimes.length ? adminSelectedTimes : (unavailableForm.time ? [unavailableForm.time] : []);
-
-    if (!dateStr || selectedTimes.length === 0) {
-      alert('Please select a date and at least one time slot.');
-      return;
-    }
-
-    const newSlots = selectedTimes.map(timeStr => ({
-      id: Date.now() + Math.floor(Math.random() * 100000),
-      date: dateStr,
-      time: timeStr,
-      reason: unavailableForm.reason,
-      stylist: unavailableForm.stylist || 'All',
-      status: unavailableForm.status || 'unavailable'
-    }));
-
-    const updated = pruneExpiredUnavailableSlots([...unavailableSlots, ...newSlots]);
-    setUnavailableSlots(updated);
-    // Immediate persistence to prevent loss on refresh
-    localStorage.setItem('unavailableSlots', JSON.stringify(updated));
-
-    // Clear inline selection
-    setUnavailableForm({ date: '', time: '', reason: '', stylist: 'All', status: 'unavailable' });
-    setAdminSelectedDate(null);
-    setAdminSelectedTimes([]);
+  const handleUnavailableAdd = (e) => {
+    e.preventDefault();
+    const newSlot = {
+      id: Date.now(),
+      date: unavailableForm.date,
+      time: unavailableForm.time,
+      reason: unavailableForm.reason
+    };
+    setUnavailableSlots([...unavailableSlots, newSlot]);
+    setShowUnavailableForm(false);
+    setUnavailableForm({ date: '', time: '', reason: '' });
   };
   
   const handleUnavailableDelete = (id) => {
     if (confirm('Are you sure you want to remove this unavailable slot?')) {
-      const updated = unavailableSlots.filter(s => s.id !== id);
-      setUnavailableSlots(updated);
-      // Persist deletion immediately
-      localStorage.setItem('unavailableSlots', JSON.stringify(updated));
+      setUnavailableSlots(unavailableSlots.filter(s => s.id !== id));
     }
   };
   
   const handleAppointmentStatusChange = async (appointmentId, newStatus) => {
     if (newStatus === 'cancelled') {
-      let cancelled = [];
-      try {
-        cancelled = JSON.parse(localStorage.getItem('cancelledAppointments') || '[]');
-      } catch {
-        cancelled = [];
-      }
-      const idStr = String(appointmentId);
-      if (!cancelled.map(String).includes(idStr)) {
-        cancelled.push(idStr);
-        localStorage.setItem('cancelledAppointments', JSON.stringify(cancelled));
-      }
-      setAppointments(appointments.filter(apt => String(apt.id) !== idStr));
+      const cancelled = JSON.parse(localStorage.getItem('cancelledAppointments') || '[]');
+      cancelled.push(appointmentId);
+      localStorage.setItem('cancelledAppointments', JSON.stringify(cancelled));
+      setAppointments(appointments.filter(apt => apt.id !== appointmentId));
     } else {
       setAppointments(appointments.map(apt => 
         apt.id === appointmentId ? { ...apt, status: newStatus } : apt
@@ -444,7 +240,7 @@ function AdminDashboard() {
   
   const renderDashboard = () => (
     <div className="admin-content">
-      <h2 className="admin-title"></h2>
+      <h2 className="admin-title">Dashboard Overview</h2>
       
       <div style={styles.statsGrid}>
         <div style={styles.statCard}>
@@ -515,7 +311,7 @@ function AdminDashboard() {
   const renderAppointments = () => (
     <div className="admin-content">
       <div style={styles.sectionHeader}>
-        <h2 className="admin-title"></h2>
+        <h2 className="admin-title">Appointments Management</h2>
         <button onClick={fetchAppointments} style={styles.refreshBtn}>
           🔄 Refresh
         </button>
@@ -582,7 +378,7 @@ function AdminDashboard() {
   const renderServices = () => (
     <div className="admin-content">
       <div style={styles.sectionHeader}>
-        <h2 className="admin-title"></h2>
+        <h2 className="admin-title">Services Management</h2>
         <button 
           onClick={() => { setShowServiceForm(true); setEditingService(null); setServiceForm({ name: '', duration: '', price: '' }); }} 
           style={styles.addBtn}
@@ -692,145 +488,72 @@ function AdminDashboard() {
   const renderAvailability = () => (
     <div className="admin-content">
       <div style={styles.sectionHeader}>
-        <h2 className="admin-title"></h2>
+        <h2 className="admin-title">Availability Management</h2>
+        <button 
+          onClick={() => setShowUnavailableForm(true)} 
+          style={styles.addBtn}
+        >
+          ➕ Mark Unavailable
+        </button>
       </div>
-
-      {/* Panels Row: Date + Time side by side */}
-      <div style={styles.panelRow}>
-        {/* Date Selection Panel */}
-        <div className="booking-panel" style={styles.panelCol}>
-          <div className="panel-header">
-            <h3>SELECT DATE</h3>
-            <div className="date-navigation">
-              <button onClick={(e) => { e.stopPropagation(); adminHandleMonthChange('prev'); }}>‹</button>
-              <span>{adminGetMonthName(adminCurrentMonth)}</span>
-              <button onClick={(e) => { e.stopPropagation(); adminHandleMonthChange('next'); }}>›</button>
-            </div>
-          </div>
-          <div className="panel-content">
-            <div className="calendar">
-              <div className="calendar-header">
-                <span>Mo</span><span>Tu</span><span>We</span><span>Th</span><span>Fr</span><span>Sa</span><span>Su</span>
+      
+      {showUnavailableForm && (
+        <div style={styles.modal}>
+          <div style={styles.modalContent}>
+            <h3 style={styles.modalTitle}>Mark Time Slot Unavailable</h3>
+            <form onSubmit={handleUnavailableAdd}>
+              <div style={styles.formGroup}>
+                <label style={styles.label}>Date:</label>
+                <input
+                  type="text"
+                  value={unavailableForm.date}
+                  onChange={(e) => setUnavailableForm({ ...unavailableForm, date: e.target.value })}
+                  required
+                  style={styles.input}
+                  placeholder="e.g., October 2025 10"
+                />
               </div>
-              <div className="calendar-grid">
-                {adminGetDaysInMonth(adminCurrentMonth).map((day, idx) => (
-                  <div
-                    key={idx}
-                    className={`calendar-day ${day ? 'available' : 'empty'} ${adminSelectedDate === day ? 'selected' : ''}`}
-                    onClick={() => day && adminHandleDateSelect(day)}
-                  >
-                    {day}
-                  </div>
-                ))}
+              
+              <div style={styles.formGroup}>
+                <label style={styles.label}>Time:</label>
+                <input
+                  type="text"
+                  value={unavailableForm.time}
+                  onChange={(e) => setUnavailableForm({ ...unavailableForm, time: e.target.value })}
+                  required
+                  style={styles.input}
+                  placeholder="e.g., 12:00 pm"
+                />
               </div>
-            </div>
+              
+              <div style={styles.formGroup}>
+                <label style={styles.label}>Reason (optional):</label>
+                <input
+                  type="text"
+                  value={unavailableForm.reason}
+                  onChange={(e) => setUnavailableForm({ ...unavailableForm, reason: e.target.value })}
+                  style={styles.input}
+                  placeholder="e.g., Holiday"
+                />
+              </div>
+              
+              <div style={styles.modalActions}>
+                <button type="submit" style={{ ...styles.actionBtn, backgroundColor: '#28a745' }}>
+                  Add Unavailable
+                </button>
+                <button 
+                  type="button" 
+                  onClick={() => setShowUnavailableForm(false)}
+                  style={{ ...styles.actionBtn, backgroundColor: '#6c757d' }}
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
           </div>
         </div>
-
-        {/* Time Selection Panel */}
-        <div className="booking-panel" style={styles.panelCol}>
-          <div className="panel-header">
-            <h3>TIME SLOTS</h3>
-          </div>
-          <div className="panel-content">
-            <div className="time-section">
-              <h4>Morning</h4>
-              <div className="time-slots">
-                {timeSlots.morning.map((time, i) => (
-                  <div
-                    key={i}
-                    className={`time-slot ${adminSelectedTimes.includes(time) ? 'selected' : ''}`}
-                    onClick={() => adminHandleTimeSelect(time)}
-                  >
-                    {time}
-                  </div>
-                ))}
-              </div>
-            </div>
-            <div className="time-section">
-              <h4>Afternoon</h4>
-              <div className="time-slots">
-                {timeSlots.afternoon.map((time, i) => (
-                  <div
-                    key={i}
-                    className={`time-slot ${adminSelectedTimes.includes(time) ? 'selected' : ''}`}
-                    onClick={() => adminHandleTimeSelect(time)}
-                  >
-                    {time}
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Intuitive Selection Summary & Save */}
-      <div style={{ ...styles.settingsCard, marginTop: '1rem' }}>
-        <h3 style={styles.sectionTitle}>Selection Summary</h3>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
-          <div>
-            <div style={styles.settingLabel}>Date</div>
-            <div style={styles.settingValue}>{adminSelectedDate ? `${adminGetMonthName(adminCurrentMonth)} ${adminSelectedDate}` : '—'}</div>
-          </div>
-          <div>
-            <div style={styles.settingLabel}>Time</div>
-            <div style={styles.settingValue}>{adminSelectedTimes.length ? adminSelectedTimes.join(', ') : '—'}</div>
-          </div>
-          <div>
-            <div style={styles.settingLabel}>Stylist</div>
-            <select
-              value={unavailableForm.stylist}
-              onChange={(e) => setUnavailableForm(prev => ({ ...prev, stylist: e.target.value }))}
-              style={{ ...styles.input, maxWidth: '240px' }}
-            >
-              <option>All</option>
-              <option>Noxolo</option>
-              <option>Thandi</option>
-            </select>
-          </div>
-          <div>
-            <div style={styles.settingLabel}>Status</div>
-            <div style={{ display: 'flex', gap: '0.5rem' }}>
-              <button
-                type="button"
-                onClick={() => setUnavailableForm({ ...unavailableForm, status: 'unavailable' })}
-                style={{ ...styles.actionBtn, backgroundColor: unavailableForm.status === 'unavailable' ? '#ffc107' : '#e0e0e0', color: '#333' }}
-              >
-                Unavailable
-              </button>
-              <button
-                type="button"
-                onClick={() => setUnavailableForm({ ...unavailableForm, status: 'booked' })}
-                style={{ ...styles.actionBtn, backgroundColor: unavailableForm.status === 'booked' ? '#d17b7b' : '#e0e0e0', color: '#fff' }}
-              >
-                Booked
-              </button>
-            </div>
-          </div>
-          <div style={{ gridColumn: '1 / -1' }}>
-            <div style={styles.settingLabel}>Reason (optional)</div>
-            <input
-              type="text"
-              value={unavailableForm.reason}
-              onChange={(e) => setUnavailableForm({ ...unavailableForm, reason: e.target.value })}
-              style={styles.input}
-              placeholder="e.g., Holiday or Maintenance"
-            />
-          </div>
-        </div>
-        <div style={{ marginTop: '1rem', display: 'flex', justifyContent: 'flex-end', gap: '1rem' }}>
-          <button
-            type="button"
-            onClick={handleUnavailableSave}
-            style={{ ...styles.actionBtn, backgroundColor: '#28a745' }}
-          >
-            Save Slot
-          </button>
-        </div>
-      </div>
-
-      {/* Unavailable Slots List with badges */}
+      )}
+      
       <div style={styles.unavailableList}>
         {unavailableSlots.length === 0 ? (
           <div style={styles.emptyMessage}>No unavailable slots marked</div>
@@ -840,14 +563,6 @@ function AdminDashboard() {
               <div style={styles.unavailableInfo}>
                 <div style={styles.unavailableDate}>{slot.date}</div>
                 <div style={styles.unavailableTime}>{slot.time}</div>
-                <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.25rem' }}>
-                  <span style={{ padding: '0.2rem 0.6rem', borderRadius: '12px', background: '#f0f0f0', color: '#333', fontSize: '0.85rem' }}>
-                    {slot.stylist === 'All' ? 'All Stylists' : slot.stylist}
-                  </span>
-                  <span style={{ padding: '0.2rem 0.6rem', borderRadius: '12px', background: slot.status === 'booked' ? '#d17b7b' : '#ffc107', color: '#fff', fontSize: '0.85rem' }}>
-                    {slot.status === 'booked' ? 'Booked' : 'Unavailable'}
-                  </span>
-                </div>
                 {slot.reason && <div style={styles.unavailableReason}>{slot.reason}</div>}
               </div>
               <button
@@ -893,7 +608,6 @@ function AdminDashboard() {
   // Toggle mobile menu when clicking a nav button
   const handleNavClick = (tab) => {
     setActiveTab(tab);
-    localStorage.setItem('adminActiveTab', tab);
     if (isMobile) {
       setIsMobileMenuOpen(false);
     }
@@ -934,8 +648,6 @@ function AdminDashboard() {
         </div>
         
         <nav style={styles.nav}>
-          <Link to="/" style={styles.navLink}>🏠 Home</Link>
-          <Link to="/dashboard" style={styles.navLink}>👤 User Dashboard</Link>
           <button
             onClick={() => handleNavClick('dashboard')}
             style={{
@@ -943,7 +655,7 @@ function AdminDashboard() {
               backgroundColor: activeTab === 'dashboard' ? '#f0f0f0' : 'transparent'
             }}
           >
-            📊 Admin Dashboard
+            🏠 Dashboard
           </button>
           <button
             onClick={() => handleNavClick('appointments')}
@@ -972,18 +684,14 @@ function AdminDashboard() {
           >
             🚫 Availability
           </button>
-          
-          
           <button
-            onClick={handleLogout}
+            onClick={() => handleNavClick('settings')}
             style={{
               ...styles.navButton,
-              marginTop: '2rem',
-              backgroundColor: '#f8d7da',
-              color: '#721c24'
+              backgroundColor: activeTab === 'settings' ? '#f0f0f0' : 'transparent'
             }}
           >
-            🚪 Logout
+            ⚙️ Settings
           </button>
         </nav>
       </div>
@@ -1076,18 +784,6 @@ const styles = {
     borderRadius: '0 25px 25px 0',
     marginRight: '1rem'
   },
-  navLink: {
-    padding: '1rem 1.5rem',
-    textDecoration: 'none',
-    textAlign: 'left',
-    fontSize: '1rem',
-    fontWeight: '500',
-    color: '#333333',
-    display: 'block',
-    transition: 'background-color 0.2s',
-    borderRadius: '0 25px 25px 0',
-    marginRight: '1rem'
-  },
   mainContent: {
     marginLeft: '250px',
     flex: 1,
@@ -1106,7 +802,7 @@ const styles = {
     backgroundColor: '#ffffff',
     padding: '2rem',
     borderRadius: '10px',
-    boxShadow: '0 2px 5px rgba(0,0,0,0.1)',
+    boxShadow: '0 2px 5px rgba(0,0,0,0.1)'
   },
   adminTitle: {
     fontSize: '1.8rem',
@@ -1282,7 +978,7 @@ const styles = {
     backgroundColor: '#fff3cd',
     padding: '1.5rem',
     borderRadius: '10px',
-    border: '1px solid ',
+    border: '1px solid #ffc107',
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center'
@@ -1383,16 +1079,6 @@ const styles = {
     bottom: 0,
     backgroundColor: 'rgba(0,0,0,0.5)',
     zIndex: 999
-  },
-  panelRow: {
-    display: 'flex',
-    gap: '1rem',
-    alignItems: 'flex-start',
-    flexWrap: 'wrap'
-  },
-  panelCol: {
-    flex: 1,
-    minWidth: '320px'
   }
 };
 

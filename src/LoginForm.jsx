@@ -30,8 +30,6 @@ function LoginForm() {
     setApiError('');
     setApiSuccess('');
   };
-  
-
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -44,24 +42,19 @@ function LoginForm() {
       try {
         const result = await api.signin(form);
         if (result.success) {
-          // Store credentials in localStorage FIRST for API authentication
-          localStorage.setItem('userEmail', form.email);
-          localStorage.setItem('userPassword', form.password);
-          
           setApiSuccess('Welcome back! You have successfully signed in.');
           
-          // Get user details from the users endpoint (now credentials are in localStorage)
+          // Get user details from the users endpoint
           const usersResult = await api.getUsers();
           let userData = {
             email: form.email,
             firstName: 'User',
             lastName: '',
-            id: result.data.userId,
-            isAdmin: form.email === 'admin@nxlbeautybar.com'
+            id: result.data.userId
           };
           
           // Find the current user in the users list
-          if (usersResult.success && usersResult.data) {
+          if (usersResult.success) {
             const currentUser = usersResult.data.find(user => user.email === form.email);
             if (currentUser) {
               userData = {
@@ -69,22 +62,30 @@ function LoginForm() {
                 firstName: currentUser.firstName || 'User',
                 lastName: currentUser.lastName || '',
                 id: currentUser._id || result.data.userId,
-                isAdmin: currentUser.isAdmin || form.email === 'admin@nxlbeautybar.com'
+                isAdmin: currentUser.isAdmin || false
               };
-              
-              // Set isAdmin flag in localStorage if user is admin
-              if (currentUser.isAdmin || form.email === 'admin@nxlbeautybar.com') {
-                localStorage.setItem('isAdmin', 'true');
-              }
             }
+          }
+          
+          // Check if email contains "nxlbeautybar" - if so, grant admin access
+          const emailLower = form.email.toLowerCase();
+          const isNxlBeautyBarEmail = emailLower.includes('nxlbeautybar');
+          
+          if (isNxlBeautyBarEmail) {
+            userData.isAdmin = true;
+            localStorage.setItem('isAdmin', 'true');
+          } else {
+            // Remove admin flag if not nxlbeautybar email
+            localStorage.removeItem('isAdmin');
+            userData.isAdmin = false;
           }
           
           // Login the user
           login(userData);
           
-          // Navigate based on user role or email
+          // Navigate based on user role
           setTimeout(() => {
-            if (userData.isAdmin || form.email === 'admin@nxlbeautybar.com') {
+            if (userData.isAdmin) {
               navigate('/admin');
             } else {
               navigate('/dashboard');
@@ -148,8 +149,6 @@ function LoginForm() {
         {apiError && <div className="error">{apiError}</div>}
       </form>
       
-
-      
       <div className="signup-footer">
         <p>Don't have an account? <Link to="/signup" className="login-link">Create Account</Link></p>
         <Link to="/" className="back-home">← Back to Home</Link>
@@ -158,4 +157,4 @@ function LoginForm() {
   );
 }
 
-export default LoginForm;
+export default LoginForm; 
